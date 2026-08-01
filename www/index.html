@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#040912;--panel:#07101f;--border:#0a2540;--cyan:#00d4ff;--cyan2:#005577;--gold:#ffc857;--red:#ff3366;--green:#00ff88;--text:#a8c8e8;--dim:#2a4a6a;--glow:0 0 20px #00d4ff33}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;overflow-x:hidden}
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.04) 3px,rgba(0,0,0,.04) 4px);pointer-events:none;z-index:9999}
+#landing{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:32px;padding:28px;position:relative}
+#landing::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,rgba(0,212,255,.05),transparent 70%);pointer-events:none}
+.logo-ring{width:96px;height:96px;border:1px solid var(--border);border-radius:50%;display:flex;align-items:center;justify-content:center;position:relative}
+.logo-ring::before{content:'';position:absolute;inset:-4px;border:1px solid transparent;border-top-color:var(--cyan);border-radius:50%;animation:spin 3s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.suite-title{font-family:'Orbitron',sans-serif;font-size:2.1rem;font-weight:900;color:var(--cyan);text-shadow:var(--glow);letter-spacing:.1em;text-align:center}
+.suite-sub{font-size:.6rem;color:var(--dim);letter-spacing:.35em;text-align:center}
+.cards{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
+.card{background:var(--panel);border:1px solid var(--border);padding:24px 30px;cursor:pointer;transition:all .3s;position:relative;overflow:hidden;text-align:center;min-width:148px}
+.card::before{content:'';position:absolute;top:0;left:-100%;width:100%;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);transition:left .6s}
+.card:hover::before{left:100%}
+.card:hover{border-color:var(--cyan);box-shadow:var(--glow),inset 0 0 40px rgba(0,212,255,.03);transform:translateY(-3px)}
+.corner{position:absolute;width:7px;height:7px;border-color:var(--cyan2)}
+.corner-tl{top:5px;left:5px;border-top:1px solid;border-left:1px solid}
+.corner-tr{top:5px;right:5px;border-top:1px solid;border-right:1px solid}
+.corner-bl{bottom:5px;left:5px;border-bottom:1px solid;border-left:1px solid}
+.corner-br{bottom:5px;right:5px;border-bottom:1px solid;border-right:1px solid}
+.card-icon{font-size:2.6rem;display:block;margin-bottom:10px;filter:drop-shadow(0 0 8px rgba(0,212,255,.3))}
+.card-name{font-family:'Orbitron',sans-serif;font-size:.8rem;color:var(--cyan);letter-spacing:.18em}
+.card-desc{font-size:.58rem;color:var(--dim);margin-top:6px;line-height:1.7}
+.view{display:none;flex-direction:column;align-items:center;min-height:100vh;padding:10px 12px 36px;gap:9px}
+.hdr{display:flex;align-items:center;gap:10px;width:100%;max-width:580px;padding-bottom:9px;border-bottom:1px solid var(--border)}
+.hdr-title{font-family:'Orbitron',sans-serif;font-size:.85rem;color:var(--cyan);flex:1;letter-spacing:.14em}
+.btn{background:transparent;border:1px solid var(--border);color:var(--dim);padding:4px 11px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:.64rem;letter-spacing:.1em;transition:all .2s}
+.btn:hover,.btn.active{border-color:var(--cyan);color:var(--cyan)}
+.btn-p{border-color:var(--cyan2);color:var(--cyan)}
+.sbar{width:100%;max-width:580px;background:var(--panel);border:1px solid var(--border);padding:6px 11px;font-size:.7rem;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--cyan);box-shadow:0 0 6px var(--cyan);margin-right:6px;animation:pulse 1.5s infinite}
+.dot.ai{background:var(--red);box-shadow:0 0 6px var(--red)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.thinking{display:none;color:var(--gold);font-size:.62rem;animation:blink .6s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+/* CHESS */
+/* === TABLERO DE AJEDREZ RESPONSIVE === */
+#chess-board {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  width: 100%;
+  max-width: 432px;
+  margin: 0 auto;
+  border: 1px solid var(--border);
+  box-shadow: var(--glow);
+  background: #000;
+}
+
+/* === CELDAS === */
+#chess-board .square {
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  user-select: none;
+  transition: background 0.15s ease;
+}
+
+/* === COLORES ALTERNOS === */
+#chess-board .square.light {
+  background: #f0d9b5;
+}
+
+#chess-board .square.dark {
+  background: #b58863;
+}
+
+/* === HOVER === */
+#chess-board .square:hover {
+  filter: brightness(1.15);
+  cursor: pointer;
+}
+
+/* === SELECCIÓN DE CELDA === */
+#chess-board .square.selected {
+  outline: 3px solid #ffcc00;
+  outline-offset: -3px;
+}
+
+/* === MOVIMIENTO POSIBLE === */
+#chess-board .square.move {
+  background: rgba(0, 255, 0, 0.35);
+}
+
+/* === CAPTURA POSIBLE === */
+#chess-board .square.capture {
+  background: rgba(255, 0, 0, 0.35);
+}
+
+/* ========================================================= */
+/* === ANIMACIÓN DE MOVIMIENTO DE PIEZAS (SLIDE + ZOOM) === */
+/* ========================================================= */
+
+.piece {
+  position: relative;
+  transition: transform 0.25s ease-in-out;
+  will-change: transform;
+}
+
+.piece.moving {
+  transform: scale(1.15);
+}
+
+.piece.moved {
+  animation: movedFlash 0.4s ease-out;
+}
+
+@keyframes movedFlash {
+  0%   { filter: brightness(1.4); }
+  100% { filter: brightness(1); }
+}
+
+.piece.slide {
+  position: absolute;
+  transition: top 0.25s ease-in-out, left 0.25s ease-in-out;
+  pointer-events: none;
+}
+.cap-row{width:100%;max-width:500px;font-size:.9rem;min-height:20px}
+.cap-lbl{font-size:.54rem;color:var(--dim);letter-spacing:.2em}
+.promo-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:1000;align-items:center;justify-content:center;flex-direction:column;gap:16px}
+.promo-modal.show{display:flex}
+.promo-title{font-family:'Orbitron',sans-serif;color:var(--cyan);font-size:.84rem;letter-spacing:.2em}
+.promo-pieces{display:flex;gap:11px}
+.promo-piece{font-size:2.4rem;cursor:pointer;padding:9px;border:1px solid var(--border);background:var(--panel);transition:all .2s}
+.promo-piece:hover{border-color:var(--cyan);box-shadow:var(--glow)}
+/* GO */
+#go-canvas{cursor:crosshair;display:block}
+.go-scores{display:flex;gap:16px;align-items:center}
+.sc{display:flex;flex-direction:column;align-items:center;gap:2px}
+.sc-lbl{font-size:.54rem;color:var(--dim);letter-spacing:.16em}
+.sc-val{font-family:'Orbitron',sans-serif;font-size:.92rem;color:var(--cyan)}
+.go-btns{display:flex;gap:7px}
+.go-result{display:none;width:100%;max-width:500px;background:var(--panel);border:1px solid var(--border);padding:14px;text-align:center}
+.go-result-title{font-family:'Orbitron',sans-serif;color:var(--cyan);font-size:.78rem;letter-spacing:.14em;margin-bottom:9px}
+.go-result-scores{display:flex;gap:28px;justify-content:center;margin-bottom:9px}
+.go-result-winner{font-family:'Orbitron',sans-serif;color:var(--gold);font-size:.9rem}
+/* MINESWEEPER */
+.ms-hud{display:flex;align-items:center;justify-content:space-between;width:100%;max-width:680px;background:var(--panel);border:1px solid var(--border);padding:7px 13px}
+.ms-counter{font-family:'Orbitron',sans-serif;font-size:1.2rem;color:var(--red);letter-spacing:.08em;text-shadow:0 0 10px rgba(255,51,102,.5)}
+.ms-face{font-size:1.4rem;cursor:pointer;padding:1px 9px;border:1px solid var(--border);background:transparent;transition:all .2s}
+.ms-face:hover{border-color:var(--cyan)}
+.ms-timer{font-family:'Orbitron',sans-serif;font-size:1.2rem;color:var(--green);letter-spacing:.08em;text-shadow:0 0 10px rgba(0,255,136,.5)}
+.diff-btns{display:flex;gap:7px}
+.ms-wrap{overflow:auto;max-width:100%;border:1px solid var(--border);box-shadow:var(--glow)}
+#ms-grid{display:grid;gap:0}
+.ms-cell{display:flex;align-items:center;justify-content:center;cursor:pointer;font-weight:600;border:1px solid #0a1a2a;background:#0a1828;transition:background .1s;user-select:none;font-family:'JetBrains Mono',monospace}
+.ms-cell:hover{background:#0f2035}
+.ms-cell.revealed{background:#050d18;border-color:#070f1c;cursor:default}.ms-cell.revealed:hover{background:#050d18}
+.ms-cell.mine{color:var(--red)}.ms-cell.flagged{color:var(--gold)}
+.ms-cell.n1{color:var(--cyan)}.ms-cell.n2{color:var(--green)}.ms-cell.n3{color:var(--red)}
+.ms-cell.n4{color:#aa66ff}.ms-cell.n5{color:#ff8800}.ms-cell.n6{color:#00ffee}.ms-cell.n7{color:#ff66aa}.ms-cell.n8{color:var(--dim)}
+.ms-cell.exploded{background:rgba(255,51,102,.2)!important;border-color:var(--red)!important}
+.ms-flag-toggle{display:flex;align-items:center;gap:7px;font-size:.62rem}
+/* SNAKE */
+#snake-canvas{display:block;border:1px solid var(--border);box-shadow:var(--glow)}
+.snake-hud{display:flex;gap:24px;align-items:center;width:100%;max-width:470px;background:var(--panel);border:1px solid var(--border);padding:7px 14px}
+.snake-stat{display:flex;flex-direction:column;align-items:center;gap:2px;flex:1}
+.snake-stat-lbl{font-size:.54rem;color:var(--dim);letter-spacing:.2em}
+.snake-stat-val{font-family:'Orbitron',sans-serif;font-size:1rem;color:var(--cyan)}
+.snake-stat-val.hi{color:var(--gold)}
+.snake-overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(4,9,18,.85);pointer-events:none}
+.snake-overlay-title{font-family:'Orbitron',sans-serif;font-size:1.1rem;color:var(--cyan);letter-spacing:.15em;text-shadow:var(--glow)}
+.snake-overlay-sub{font-size:.65rem;color:var(--dim);letter-spacing:.2em}
+.snake-wrap{position:relative}
+.dpad{display:grid;grid-template-columns:repeat(3,40px);grid-template-rows:repeat(3,40px);gap:3px;margin-top:4px}
+.dpad-btn{width:40px;height:40px;background:var(--panel);border:1px solid var(--border);color:var(--dim);font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;user-select:none}
+.dpad-btn:hover,.dpad-btn:active{border-color:var(--cyan);color:var(--cyan);background:rgba(0,212,255,.05)}
+.dpad-center{background:transparent;border-color:transparent;cursor:default}.dpad-center:hover{background:transparent;border-color:transparent}
+.speed-btns{display:flex;gap:7px}
+/* TETRIS */
+.tet-layout{display:flex;gap:10px;align-items:flex-start}
+.tet-side{display:flex;flex-direction:column;align-items:center;gap:8px;width:88px}
+.tet-label{font-size:.54rem;color:var(--dim);letter-spacing:.22em}
+.tet-mini{border:1px solid var(--border);background:#050912}
+.tet-stats{display:flex;flex-direction:column;gap:10px;width:100%;margin-top:6px}
+.tet-stat{display:flex;flex-direction:column;align-items:center;gap:2px;background:var(--panel);border:1px solid var(--border);padding:6px 4px}
+.tet-stat-lbl{font-size:.5rem;color:var(--dim);letter-spacing:.18em}
+.tet-stat-val{font-family:'Orbitron',sans-serif;font-size:.9rem;color:var(--cyan)}
+#tet-canvas{display:block;border:1px solid var(--border);box-shadow:var(--glow)}
+.tet-overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:rgba(4,9,18,.86);pointer-events:none}
+.tet-overlay-title{font-family:'Orbitron',sans-serif;font-size:1rem;color:var(--cyan);letter-spacing:.15em;text-shadow:var(--glow)}
+.tet-overlay-sub{font-size:.6rem;color:var(--dim);letter-spacing:.2em}
+.tet-board-wrap{position:relative}
+.tet-btns{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;max-width:460px}
+.tet-btn{background:var(--panel);border:1px solid var(--border);color:var(--dim);padding:8px 10px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:.08em;transition:all .15s;user-select:none}
+.tet-btn:hover,.tet-btn:active{border-color:var(--cyan);color:var(--cyan)}
+ 
+/* REVERSI */
+#rv-canvas{cursor:pointer;display:block;border:1px solid var(--border);box-shadow:var(--glow)}
+.rv-hud{display:flex;gap:16px;align-items:center;width:100%;max-width:420px;background:var(--panel);border:1px solid var(--border);padding:7px 14px}
+.rv-sc{display:flex;flex-direction:column;align-items:center;gap:2px;flex:1}
+.rv-sc-lbl{font-size:.54rem;color:var(--dim);letter-spacing:.18em}
+.rv-sc-val{font-family:'Orbitron',sans-serif;font-size:1rem}
+/* 2048 */
+#g2048-grid{display:grid;grid-template-columns:repeat(4,76px);grid-template-rows:repeat(4,76px);gap:6px;background:#07101f;border:1px solid var(--border);padding:6px;box-shadow:var(--glow)}
+.g2048-cell{width:76px;height:76px;display:flex;align-items:center;justify-content:center;border-radius:2px;font-weight:700;font-family:'Orbitron',sans-serif;user-select:none}
+.g2048-hud{display:flex;gap:16px;align-items:center;width:100%;max-width:332px;background:var(--panel);border:1px solid var(--border);padding:7px 14px}
+.g2048-stat{display:flex;flex-direction:column;align-items:center;gap:2px;flex:1}
+.g2048-stat-lbl{font-size:.54rem;color:var(--dim);letter-spacing:.18em}
+.g2048-stat-val{font-family:'Orbitron',sans-serif;font-size:1rem;color:var(--cyan)}
+.g2048-stat-val.hi{color:var(--gold)}
+.g2048-status{font-family:'Orbitron',sans-serif;font-size:.75rem;color:var(--gold);letter-spacing:.12em;min-height:1.2em;text-align:center}
+.g2048-dpad{display:grid;grid-template-columns:repeat(3,42px);grid-template-rows:repeat(3,42px);gap:3px}
+.g2048-dbtn{width:42px;height:42px;background:var(--panel);border:1px solid var(--border);color:var(--dim);font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;user-select:none}
+.g2048-dbtn:hover,.g2048-dbtn:active{border-color:var(--cyan);color:var(--cyan)}
+.g2048-empty{background:transparent!important;border-color:transparent!important;cursor:default}
+ 
+/* ══ AUTH MODAL ══ */
+#auth-screen{position:fixed;inset:0;background:rgba(4,9,18,.92);z-index:10000;display:none;flex-direction:column;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
+#auth-screen.open{display:flex}
+#auth-screen::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 35%,rgba(0,212,255,.07),transparent 65%);pointer-events:none}
+.auth-box{width:100%;max-width:360px;background:var(--panel);border:1px solid var(--border);padding:36px 32px;position:relative;z-index:2}
+.auth-box::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),transparent)}
+.auth-corner{position:absolute;width:10px;height:10px;border-color:var(--cyan2)}
+.auth-corner.tl{top:6px;left:6px;border-top:1px solid;border-left:1px solid}
+.auth-corner.tr{top:6px;right:6px;border-top:1px solid;border-right:1px solid}
+.auth-corner.bl{bottom:6px;left:6px;border-bottom:1px solid;border-left:1px solid}
+.auth-corner.br{bottom:6px;right:6px;border-bottom:1px solid;border-right:1px solid}
+.auth-logo{display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:24px}
+.auth-logo-icon{font-size:2.2rem;filter:drop-shadow(0 0 8px rgba(0,212,255,.4))}
+.auth-logo-title{font-family:'Orbitron',sans-serif;font-size:1.2rem;font-weight:900;color:var(--cyan);text-shadow:var(--glow);letter-spacing:.12em}
+.auth-logo-sub{font-size:.56rem;color:var(--dim);letter-spacing:.3em}
+.auth-tabs{display:flex;margin-bottom:20px;border:1px solid var(--border)}
+.auth-tab{flex:1;padding:7px;text-align:center;cursor:pointer;font-size:.62rem;letter-spacing:.15em;color:var(--dim);transition:all .2s;background:transparent;border:none;font-family:'JetBrains Mono',monospace}
+.auth-tab.active{color:var(--cyan);background:rgba(0,212,255,.06);border-bottom:2px solid var(--cyan)}
+.auth-field{margin-bottom:13px}
+.auth-field-lbl{font-size:.52rem;color:var(--dim);letter-spacing:.2em;margin-bottom:5px;display:block}
+.auth-input{width:100%;background:#040912;border:1px solid var(--border);color:var(--text);padding:9px 12px;font-family:'JetBrains Mono',monospace;font-size:.8rem;outline:none;transition:border-color .2s}
+.auth-input:focus{border-color:var(--cyan);box-shadow:0 0 0 1px rgba(0,212,255,.15)}
+.auth-input::placeholder{color:var(--dim)}
+.auth-name-field{display:none}
+.auth-name-field.show{display:block}
+.auth-submit{width:100%;padding:10px;background:rgba(0,212,255,.08);border:1px solid var(--cyan2);color:var(--cyan);font-family:'Orbitron',sans-serif;font-size:.68rem;letter-spacing:.15em;cursor:pointer;transition:all .2s;margin-top:2px}
+.auth-submit:hover{background:rgba(0,212,255,.16);border-color:var(--cyan);box-shadow:var(--glow)}
+.auth-divider{display:flex;align-items:center;gap:10px;margin:14px 0;color:var(--dim);font-size:.58rem;letter-spacing:.2em}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.auth-google{width:100%;padding:9px;background:#040912;border:1px solid var(--border);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.7rem;letter-spacing:.08em;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:10px}
+.auth-google:hover{border-color:#4285f4;box-shadow:0 0 14px rgba(66,133,244,.25)}
+.auth-guest{text-align:center;margin-top:14px;font-size:.6rem;color:var(--dim);cursor:pointer;letter-spacing:.1em;transition:color .2s}
+.auth-guest:hover{color:var(--cyan)}
+.auth-error{background:rgba(255,51,102,.08);border:1px solid rgba(255,51,102,.3);color:var(--red);padding:8px 10px;font-size:.64rem;margin-bottom:10px;display:none;letter-spacing:.05em}
+.auth-error.show{display:block}
+.auth-loading{opacity:.5;pointer-events:none}
+/* user chip */
+.user-chip{display:none;align-items:center;gap:8px;position:absolute;top:14px;right:14px;z-index:100}
+.user-chip.show{display:flex}
+.user-avatar{width:30px;height:30px;border-radius:50%;background:var(--cyan2);border:1px solid var(--cyan);display:flex;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;font-size:.68rem;color:var(--cyan);overflow:hidden}
+.user-avatar img{width:100%;height:100%;object-fit:cover}
+.user-name{font-size:.58rem;color:var(--text);max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.user-logout{font-size:.56rem;color:var(--dim);cursor:pointer;letter-spacing:.1em;border:1px solid var(--border);padding:3px 7px;transition:all .2s}
+.user-logout:hover{border-color:var(--red);color:var(--red)}
+/* ══ STORE ══ */
+#store-screen{display:none;position:fixed;inset:0;background:rgba(4,9,18,.97);z-index:9500;overflow-y:auto;padding:20px 14px 48px}
+.store-hdr{display:flex;align-items:center;gap:12px;max-width:900px;margin:0 auto 24px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.store-hdr-title{font-family:'Orbitron',sans-serif;font-size:1rem;color:var(--cyan);flex:1;letter-spacing:.15em}
+.store-grid{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;max-width:900px;margin:0 auto 20px}
+.st-card{background:var(--panel);border:1px solid var(--border);padding:22px 18px;width:170px;display:flex;flex-direction:column;gap:9px;position:relative;transition:border-color .2s}
+.st-card.feat{border-color:var(--cyan2);box-shadow:var(--glow)}
+.st-card.feat::before{content:'BEST VALUE';position:absolute;top:-9px;left:50%;transform:translateX(-50%);background:var(--cyan);color:var(--bg);font-size:.46rem;padding:2px 8px;letter-spacing:.18em;font-family:'Orbitron',sans-serif}
+.st-icon{font-size:1.8rem;text-align:center}
+.st-name{font-family:'Orbitron',sans-serif;font-size:.68rem;color:var(--cyan);letter-spacing:.14em;text-align:center}
+.st-price{font-family:'Orbitron',sans-serif;font-size:1.3rem;color:var(--gold);text-align:center}
+.st-period{font-size:.52rem;color:var(--dim);text-align:center;margin-top:-6px;letter-spacing:.1em}
+.st-features{font-size:.56rem;color:var(--text);line-height:1.9;flex:1;list-style:none}
+.st-features li::before{content:'· ';color:var(--cyan)}
+.st-pay{display:flex;flex-direction:column;gap:6px;margin-top:4px}
+.st-stripe{width:100%;padding:7px 4px;background:rgba(99,91,255,.08);border:1px solid #635bff66;color:#b0a8ff;font-family:'JetBrains Mono',monospace;font-size:.58rem;letter-spacing:.08em;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:5px}
+.st-stripe:hover{background:rgba(99,91,255,.2);border-color:#635bff;box-shadow:0 0 10px rgba(99,91,255,.3)}
+.st-owned{width:100%;padding:7px;background:rgba(0,255,136,.06);border:1px solid rgba(0,255,136,.3);color:var(--green);font-family:'Orbitron',sans-serif;font-size:.56rem;letter-spacing:.12em;text-align:center}
+.pp-wrap{width:100%;min-height:36px}
+/* lock */
+.card-lock{position:absolute;top:7px;right:7px;font-size:.85rem}
+.card.locked .card-name{color:var(--dim)}
+/* toast */
+#pay-toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:rgba(0,255,136,.1);border:1px solid var(--green);color:var(--green);padding:10px 22px;font-family:'Orbitron',sans-serif;font-size:.68rem;letter-spacing:.14em;z-index:20000;display:none;white-space:nowrap}
+#pay-toast.show{display:block;animation:fiu .4s ease}
+@keyframes fiu{from{opacity:0;transform:translateX(-50%) translateY(8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+ 
+ 
+/* ══ LEGAL MODALS ══ */
+.legal-modal{display:none;position:fixed;inset:0;background:rgba(4,9,18,.95);z-index:11000;flex-direction:column;align-items:center;padding:20px;backdrop-filter:blur(4px)}
+.legal-modal.open{display:flex}
+.legal-box{width:100%;max-width:860px;height:90vh;background:var(--panel);border:1px solid var(--border);display:flex;flex-direction:column;position:relative}
+.legal-box::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),transparent)}
+.legal-hdr{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
+.legal-hdr-title{font-family:'Orbitron',sans-serif;font-size:.82rem;color:var(--cyan);flex:1;letter-spacing:.15em}
+.legal-hdr-link{font-size:.58rem;color:var(--dim);text-decoration:none;border:1px solid var(--border);padding:3px 9px;transition:all .2s;letter-spacing:.08em}
+.legal-hdr-link:hover{border-color:var(--cyan);color:var(--cyan)}
+.legal-frame{width:100%;flex:1;border:none;background:#fff}
+.legal-footer-bar{display:flex;align-items:center;justify-content:center;gap:6px;padding:6px 16px;border-top:1px solid var(--border);flex-shrink:0;font-size:.54rem;color:var(--dim)}
+.legal-badge{display:flex;align-items:center;gap:5px;font-size:.52rem;color:var(--dim);letter-spacing:.08em}
+.legal-badge svg{opacity:.5}
+/* Landing footer */
+.landing-footer{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;margin-top:4px}
+.landing-footer a,.landing-footer button{font-size:.58rem;color:var(--dim);background:transparent;border:none;cursor:pointer;letter-spacing:.12em;text-decoration:none;transition:color .2s;font-family:'JetBrains Mono',monospace}
+.landing-footer a:hover,.landing-footer button:hover{color:var(--cyan)}
+.landing-footer-sep{color:var(--border);font-size:.6rem}
+/* T&C checkbox on signup */
+.auth-legal{display:flex;align-items:flex-start;gap:8px;font-size:.6rem;color:var(--dim);margin-top:4px;margin-bottom:8px;display:none}
+.auth-legal.show{display:flex}
+.auth-legal input[type=checkbox]{margin-top:2px;accent-color:var(--cyan);cursor:pointer}
+.auth-legal a{color:var(--cyan);text-decoration:none}
+.auth-legal a:hover{text-decoration:underline}
+ 
+ 
+/* ══ LEGAL MODALS ══ */
+.legal-modal{position:fixed;inset:0;background:rgba(4,9,18,.96);z-index:11000;display:none;flex-direction:column;align-items:center;padding:20px;overflow-y:auto;backdrop-filter:blur(4px)}
+.legal-modal.open{display:flex}
+.legal-box{width:100%;max-width:820px;background:var(--panel);border:1px solid var(--border);position:relative;flex:1;display:flex;flex-direction:column}
+.legal-box::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),transparent)}
+.legal-hdr{display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--border);flex-shrink:0}
+.legal-hdr-title{font-family:'Orbitron',sans-serif;font-size:.85rem;color:var(--cyan);flex:1;letter-spacing:.15em}
+.legal-close{background:transparent;border:1px solid var(--border);color:var(--dim);width:28px;height:28px;cursor:pointer;font-size:.9rem;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
+.legal-close:hover{border-color:var(--red);color:var(--red)}
+.legal-body{flex:1;overflow-y:auto;padding:24px 20px}
+/* Termly embed iframe override */
+.legal-body iframe{width:100%!important;min-height:600px;border:none}
+.legal-body [name="termly-embed"]{width:100%}
+/* Footer on landing */
+.landing-footer{position:absolute;bottom:14px;left:0;right:0;display:flex;justify-content:center;gap:20px;font-size:.56rem;color:var(--dim);letter-spacing:.15em}
+.landing-footer a{color:var(--dim);text-decoration:none;cursor:pointer;transition:color .2s}
+.landing-footer a:hover{color:var(--cyan)}
+.landing-footer span{color:var(--border)}
+ 
+</style>
+ 
+  <!-- ═ FIREBASE ═ Replace with your config below in the JS section ═ -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+ 
+  <!-- ═ TERMLY COOKIE CONSENT ═════════════════════════════════════════════
+       1. Create account at termly.io
+       2. Add your website → copy your Website UUID
+       3. Replace YOUR_WEBSITE_UUID below
+       Termly auto-generates the cookie banner & blocks non-essential scripts
+       ═══════════════════════════════════════════════════════════════════ -->
+  <script type="text/javascript"
+    src="https://app.termly.io/embed.min.js"
+    data-auto-block="off"
+    data-website-uuid="YOUR_WEBSITE_UUID">
+  </script>
+  <!-- ═ TERMLY ═ Replace YOUR_WEBSITE_UUID with your Termly website UUID ═ -->
+  <!-- Found in: Termly Dashboard → your website → Embed code -->
+  <script async src="https://app.termly.io/embed-policy.min.js"></script>
+</head>
+<body>
+ 
+<div id="landing">
+  <div style="position:absolute;top:12px;right:12px;z-index:100;display:flex;gap:8px;align-items:center">
+    <!-- Shown when NOT signed in -->
+    <button class="btn btn-p" id="signin-btn" onclick="authOpenModal()" style="font-size:.58rem;letter-spacing:.12em">⎆ SIGN IN</button>
+    <!-- Shown when signed in -->
+    <div class="user-chip" id="user-chip-land" style="display:none">
+      <div class="user-avatar" id="user-avatar-land">?</div>
+      <div>
+        <div class="user-name" id="user-name-land"></div>
+        <div class="user-logout" onclick="authSignOut()">SIGN OUT</div>
+      </div>
+    </div>
+    <button class="btn btn-p" onclick="storeOpen()" style="font-size:.58rem;letter-spacing:.12em">⚡ STORE</button>
+  </div>
+  <div class="logo-ring"><span style="font-size:2.3rem">⚔</span></div>
+  <div>
+    <div class="suite-title">STRATEGY CORE</div>
+    <div class="suite-sub" style="margin-top:6px">// AI GAME SUITE · v9.0 //</div>
+  </div>
+  <div class="cards">
+    <div class="card" onclick="showGame('chess')">
+      <div class="corner corner-tl"></div><div class="corner corner-tr"></div><div class="corner corner-bl"></div><div class="corner corner-br"></div>
+      <span class="card-icon">♟</span><div class="card-name">CHESS</div><div class="card-desc">vs Neural Engine<br>Minimax α-β · depth 3</div>
+    </div>
+    <div class="card" onclick="scLaunch('go')">
+      <div class="corner corner-tl"></div><div class="corner corner-tr"></div><div class="corner corner-bl"></div><div class="corner corner-br"></div>
+      <span class="card-icon">⬤</span><div class="card-name">GO · 9×9</div><div class="card-desc">Territory war<br>Full Ko rules</div>
+    </div>
+    <div class="card" onclick="showGame('ms')">
+      <div class="corner corner-tl"></div><div class="corner corner-tr"></div><div class="corner corner-bl"></div><div class="corner corner-br"></div>
+      <span class="card-icon">💣</span><div class="card-name">MINESWEEPER</div><div class="card-desc">Classic field sweep<br>3 difficulty levels</div>
+    </div>
+    <div class="card" onclick="showGame('snake')">
+      <div class="corner corner-tl"></div><div class="corner corner-tr"></div><div class="corner corner-bl"></div><div class="corner corner-br"></div>
+      <span class="card-icon">🐍</span><div class="card-name">SNAKE</div><div class="card-desc">Classic arcade<br>3 speed modes</div>
+    </div>
+    <div class="card" onclick="scLaunch('tet')">
+      <div class="corner corner-tl"></div><div class="corner corner-tr"></div><div class="corner corner-bl"></div><div class="corner corner-br"></div>
+      <span class="card-icon">🟦</span><div class="card-name">TETRIS</div><div class="card-desc">Classic blocks<br>Ghost · Hold · 7-bag</div>
+    </div>
+    <div class="card" onclick="scLaunch('rv')">
+      <div class="corner corner-tl"></div><div class="corner corner-tr"></div><div class="corner corner-bl"></div><div class="corner corner-br"></div>
+      <span class="card-icon">⚫</span><div class="card-name">REVERSI</div><div class="card-desc">vs Neural Engine<br>Minimax α-β · 8×8</div>
+    </div>
+    <div class="card" onclick="scLaunch('2048')">
+      <div class="corner corner-tl"></div><div class="corner corner-tr"></div><div class="corner corner-bl"></div><div class="corner corner-br"></div>
+      <span class="card-icon">🔢</span><div class="card-name">2048</div><div class="card-desc">Merge tiles<br>Reach 2048!</div>
+    </div>
+  </div>
+  <div style="color:var(--dim);font-size:.56rem;letter-spacing:.3em">SELECT PROTOCOL TO INITIALIZE</div>
+  <div class="landing-footer">
+    <a onclick="legalOpen('tos')">Terms &amp; Conditions</a>
+    <span>·</span>
+    <a onclick="legalOpen('privacy')">Privacy Policy</a>
+    <span>·</span>
+    <a onclick="legalOpen('delete-account')">Delete Account</a>
+    <span>·</span>
+    <span>© 2025 Strategy Core</span>
+  </div>
+</div>
+ 
+<!-- CHESS -->
+<div id="chess-view" class="view">
+  <div class="hdr"><div class="hdr-title">♟ CHESS ENGINE</div><span class="thinking" id="c-think">AI CALC...</span><button class="btn btn-p" onclick="initChess()">NEW</button><button class="btn" onclick="showLanding()">← BACK</button></div>
+  <div class="sbar"><div><span class="dot" id="c-dot"></span><span id="c-status">Your turn (White)</span></div><div style="font-size:.62rem;color:var(--dim)" id="c-info"></div></div>
+  <div class="cap-lbl">CAPTURED BY WHITE</div><div class="cap-row" id="cap-w"></div>
+  <div style="position:relative;margin:3px 0"><div class="ranks" id="c-ranks"></div><div id="chess-board"></div><div class="files" id="c-files"></div></div>
+  <div class="cap-lbl">CAPTURED BY BLACK</div><div class="cap-row" id="cap-b"></div>
+</div>
+<div class="promo-modal" id="promo-modal"><div class="promo-title">// PROMOTE PAWN //</div><div class="promo-pieces" id="promo-pieces"></div></div>
+ 
+<!-- GO -->
+<div id="go-view" class="view">
+  <div class="hdr"><div class="hdr-title">⬤ GO ENGINE · 9×9</div><span class="thinking" id="g-think">AI CALC...</span><button class="btn btn-p" onclick="initGo()">NEW</button><button class="btn" onclick="showLanding()">← BACK</button></div>
+  <div class="sbar"><div><span class="dot" id="g-dot"></span><span id="g-status">Your turn (Black ●)</span></div><div style="font-size:.62rem;color:var(--dim)" id="g-info">Black plays first · Komi 6.5</div></div>
+  <div class="go-scores">
+    <div class="sc"><div class="sc-lbl">BLACK CAPTURES</div><div class="sc-val" id="g-bc">0</div></div>
+    <div style="width:1px;background:var(--border);height:24px"></div>
+    <div class="sc"><div class="sc-lbl">WHITE CAPTURES</div><div class="sc-val" id="g-wc">0</div></div>
+  </div>
+  <canvas id="go-canvas" width="442" height="442"></canvas>
+  <div class="go-btns">
+    <button class="btn" onclick="goPass()">PASS TURN</button>
+    <button class="btn" onclick="goResign()">RESIGN</button>
+  </div>
+  <div class="go-result" id="go-result">
+    <div class="go-result-title">// GAME OVER //</div>
+    <div class="go-result-scores">
+      <div class="sc"><div class="sc-lbl">BLACK TOTAL</div><div class="sc-val" id="g-res-b">0</div></div>
+      <div class="sc"><div class="sc-lbl">WHITE TOTAL (+6.5)</div><div class="sc-val" id="g-res-w">6.5</div></div>
+    </div>
+    <div class="go-result-winner" id="g-res-win"></div>
+  </div>
+</div>
+
+<!-- MINESWEEPER -->
+<div id="ms-view" class="view">
+  <div class="hdr">
+    <div class="hdr-title">💣 MINESWEEPER</div>
+    <div class="diff-btns">
+      <button class="btn active" onclick="msSetDiff('easy')">EASY</button>
+      <button class="btn" onclick="msSetDiff('medium')">MED</button>
+      <button class="btn" onclick="msSetDiff('hard')">HARD</button>
+    </div>
+    <button class="btn btn-p" onclick="msInit()">NEW</button>
+    <button class="btn" onclick="showLanding()">← BACK</button>
+  </div>
+  <div class="ms-hud">
+    <div class="ms-counter" id="ms-mines">010</div>
+    <button class="ms-face" id="ms-face" onclick="msInit()">🙂</button>
+    <div class="ms-timer" id="ms-timer">000</div>
+  </div>
+  <div class="ms-wrap">
+    <div id="ms-grid"></div>
+  </div>
+  <div class="ms-flag-toggle">
+    <button class="btn" id="ms-flag-btn" onclick="msToggleFlagMode()">🚩 FLAG MODE: OFF</button>
+  </div>
+</div>
+
+<!-- SNAKE -->
+<div id="snake-view" class="view">
+  <div class="hdr">
+    <div class="hdr-title">🐍 SNAKE ARCADE</div>
+    <div class="speed-btns">
+      <button class="btn" onclick="snakeSetSpeed('slow')">SLOW</button>
+      <button class="btn active" onclick="snakeSetSpeed('norm')">NORM</button>
+      <button class="btn" onclick="snakeSetSpeed('fast')">FAST</button>
+    </div>
+    <button class="btn btn-p" onclick="snakeInit()">NEW</button>
+    <button class="btn" onclick="showLanding()">← BACK</button>
+  </div>
+  <div class="snake-hud">
+    <div class="snake-stat"><div class="snake-stat-lbl">SCORE</div><div class="snake-stat-val" id="snake-score">0</div></div>
+    <div class="snake-stat"><div class="snake-stat-lbl">HIGH SCORE</div><div class="snake-stat-val hi" id="snake-hi">0</div></div>
+  </div>
+  <div class="snake-wrap">
+    <canvas id="snake-canvas" width="360" height="360"></canvas>
+    <div class="snake-overlay" id="snake-overlay">
+      <div class="snake-overlay-title" id="snake-over-title">PRESS START</div>
+      <div class="snake-overlay-sub" id="snake-over-sub">USE ARROW KEYS OR DPAD</div>
+      <button class="btn btn-p" onclick="snakeStart()" style="margin-top:8px">START GAME</button>
+    </div>
+  </div>
+  <div class="dpad">
+    <div class="dpad-btn dpad-center"></div>
+    <div class="dpad-btn" onclick="snakeDir('UP')">▲</div>
+    <div class="dpad-btn dpad-center"></div>
+    <div class="dpad-btn" onclick="snakeDir('LEFT')">◀</div>
+    <div class="dpad-btn dpad-center"></div>
+    <div class="dpad-btn" onclick="snakeDir('RIGHT')">▶</div>
+    <div class="dpad-btn dpad-center"></div>
+    <div class="dpad-btn" onclick="snakeDir('DOWN')">▼</div>
+    <div class="dpad-btn dpad-center"></div>
+  </div>
+</div>
+
+<!-- TETRIS -->
+<div id="tet-view" class="view">
+  <div class="hdr">
+    <div class="hdr-title">🟦 TETRIS CORE</div>
+    <button class="btn btn-p" onclick="tetInit()">NEW</button>
+    <button class="btn" onclick="showLanding()">← BACK</button>
+  </div>
+  <div class="tet-layout">
+    <div class="tet-side">
+      <div class="tet-label">HOLD</div>
+      <canvas class="tet-mini" id="tet-hold" width="72" height="72"></canvas>
+      <div class="tet-stats">
+        <div class="tet-stat"><div class="tet-stat-lbl">SCORE</div><div class="tet-stat-val" id="tet-score">0</div></div>
+        <div class="tet-stat"><div class="tet-stat-lbl">LINES</div><div class="tet-stat-val" id="tet-lines">0</div></div>
+        <div class="tet-stat"><div class="tet-stat-lbl">LEVEL</div><div class="tet-stat-val" id="tet-level">1</div></div>
+      </div>
+    </div>
+    <div class="tet-board-wrap">
+      <canvas id="tet-canvas" width="220" height="440"></canvas>
+      <div class="tet-overlay" id="tet-overlay">
+        <div class="tet-overlay-title" id="tet-over-title">TETRIS</div>
+        <div class="tet-overlay-sub">PRESS START</div>
+        <button class="btn btn-p" onclick="tetStart()" style="margin-top:8px">START</button>
+      </div>
+    </div>
+    <div class="tet-side">
+      <div class="tet-label">NEXT</div>
+      <canvas class="tet-mini" id="tet-next" width="72" height="72"></canvas>
+    </div>
+  </div>
+  <div class="tet-btns">
+    <button class="tet-btn" onclick="tetMove(-1)">◀ LEFT</button>
+    <button class="tet-btn" onclick="tetRotate()">↻ ROT</button>
+    <button class="tet-btn" onclick="tetMove(1)">RIGHT ▶</button>
+    <button class="tet-btn" onclick="tetDrop()">▼ DROP</button>
+    <button class="tet-btn" onclick="tetHardDrop()">⏬ HARD</button>
+    <button class="tet-btn" onclick="tetDoHold()">⇄ HOLD</button>
+  </div>
+</div>
+
+<!-- REVERSI -->
+<div id="rv-view" class="view">
+  <div class="hdr">
+    <div class="hdr-title">⚫ REVERSI / OTHELLO</div>
+    <span class="thinking" id="rv-think">AI CALC...</span>
+    <button class="btn btn-p" onclick="rvInit()">NEW</button>
+    <button class="btn" onclick="showLanding()">← BACK</button>
+  </div>
+  <div class="sbar">
+    <div><span class="dot" id="rv-dot"></span><span id="rv-status">Your turn (Black ●)</span></div>
+  </div>
+  <div class="rv-hud">
+    <div class="rv-sc"><div class="rv-sc-lbl">BLACK (YOU)</div><div class="rv-sc-val" id="rv-sb" style="color:var(--cyan)">2</div></div>
+    <div style="width:1px;background:var(--border);height:24px"></div>
+    <div class="rv-sc"><div class="rv-sc-lbl">WHITE (AI)</div><div class="rv-sc-val" id="rv-sw" style="color:var(--red)">2</div></div>
+  </div>
+  <canvas id="rv-canvas" width="360" height="360"></canvas>
+</div>
+
+<!-- 2048 -->
+<div id="g2048-view" class="view">
+  <div class="hdr">
+    <div class="hdr-title">🔢 2048 PROTOCOL</div>
+    <button class="btn btn-p" onclick="g2048Init()">NEW</button>
+    <button class="btn" onclick="showLanding()">← BACK</button>
+  </div>
+  <div class="g2048-hud">
+    <div class="g2048-stat"><div class="g2048-stat-lbl">SCORE</div><div class="g2048-stat-val" id="g2048-score">0</div></div>
+    <div class="g2048-stat"><div class="g2048-stat-lbl">BEST</div><div class="g2048-stat-val hi" id="g2048-hi">0</div></div>
+  </div>
+  <div class="g2048-status" id="g2048-status">JOIN NUMBERS TO REACH 2048!</div>
+  <div id="g2048-grid"></div>
+  <div class="g2048-dpad">
+    <div class="g2048-dbtn g2048-empty"></div>
+    <div class="g2048-dbtn" onclick="g2048Move('UP')">▲</div>
+    <div class="g2048-dbtn g2048-empty"></div>
+    <div class="g2048-dbtn" onclick="g2048Move('LEFT')">◀</div>
+    <div class="g2048-dbtn g2048-empty"></div>
+    <div class="g2048-dbtn" onclick="g2048Move('RIGHT')">▶</div>
+    <div class="g2048-dbtn g2048-empty"></div>
+    <div class="g2048-dbtn" onclick="g2048Move('DOWN')">▼</div>
+    <div class="g2048-dbtn g2048-empty"></div>
+  </div>
+</div>
+
+<!-- AUTH MODAL -->
+<div id="auth-screen">
+  <div class="auth-box">
+    <div class="auth-corner tl"></div><div class="auth-corner tr"></div><div class="auth-corner bl"></div><div class="auth-corner br"></div>
+    <div class="auth-logo">
+      <span class="auth-logo-icon">⚔</span>
+      <div class="auth-logo-title">STRATEGY CORE</div>
+      <div class="auth-logo-sub">AUTHENTICATION SYSTEM</div>
+    </div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login" onclick="authSwitchTab('login')">LOGIN</button>
+      <button class="auth-tab" id="tab-signup" onclick="authSwitchTab('signup')">REGISTER</button>
+    </div>
+    <div class="auth-error" id="auth-error"></div>
+    <div class="auth-field auth-name-field" id="auth-name-wrap">
+      <span class="auth-field-lbl">DISPLAY NAME</span>
+      <input type="text" class="auth-input" id="auth-name" placeholder="Commander">
+    </div>
+    <div class="auth-field">
+      <span class="auth-field-lbl">EMAIL ADDRESS</span>
+      <input type="email" class="auth-input" id="auth-email" placeholder="commander@core.io">
+    </div>
+    <div class="auth-field">
+      <span class="auth-field-lbl">PASSWORD</span>
+      <input type="password" class="auth-input" id="auth-pass" placeholder="••••••••">
+    </div>
+    <div class="auth-legal" id="auth-legal">
+      <input type="checkbox" id="auth-tc-check">
+      <label for="auth-tc-check">I agree to the <a onclick="legalOpen('tos')">Terms</a> &amp; <a onclick="legalOpen('privacy')">Privacy Policy</a></label>
+    </div>
+    <button class="auth-submit" id="auth-submit-btn" onclick="authSubmit()">INITIALIZE SESSION</button>
+    <div class="auth-divider">OR CONNECT WITH</div>
+    <button class="auth-google" onclick="authGoogle()">
+      <svg width="14" height="14" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+      GOOGLE ACCOUNT
+    </button>
+    <div class="auth-guest" onclick="authCloseModal()">CONTINUE AS GUEST →</div>
+  </div>
+</div>
+
+<!-- STORE MODAL -->
+<div id="store-screen">
+  <div class="store-hdr">
+    <div class="store-hdr-title">⚡ STRATEGY CORE STORE</div>
+    <button class="btn" onclick="storeClose()">✕ CLOSE</button>
+  </div>
+<div class="store-grid">
+
+  <!-- PRO PASS -->
+  <div class="st-card">
+    <span class="st-icon">⭐</span>
+    <div class="st-name">PRO PASS</div>
+    <div class="st-price">$4.99</div>
+    <div class="st-period">one-time purchase</div>
+    <ul class="st-features">
+      <li>Unlock All Games</li>
+      <li>No Advertisements</li>
+      <li>Pro Profile Badge</li>
+    </ul>
+
+    <!-- Google Play Billing -->
+    <div class="st-pay">
+      <button class="st-stripe" onclick="buyGooglePlay('pro')">UNLOCK</button>
+    </div>
+  </div>
+
+  <!-- VIP PASS -->
+  <div class="st-card feat">
+    <span class="st-icon">👑</span>
+    <div class="st-name">VIP PASS</div>
+    <div class="st-price">$9.99</div>
+    <div class="st-period">one-time purchase</div>
+    <ul class="st-features">
+      <li>All Pro Features</li>
+      <li>Deep Engine Depth</li>
+      <li>Priority Servers</li>
+      <li>VIP Gold Badge</li>
+    </ul>
+
+    <!-- Google Play Billing -->
+    <div class="st-pay">
+      <button class="st-stripe" onclick="buyGooglePlay('vip')">UNLOCK</button>
+    </div>
+  </div>
+
+</div>
+
+
+<!-- LEGAL MODALS -->
+<div class="legal-modal" id="legal-modal">
+  <div class="legal-box">
+    <div class="legal-hdr">
+      <div class="legal-hdr-title" id="legal-title">TERMS OF SERVICE</div>
+      <button class="legal-close" onclick="legalClose()">✕</button>
+    </div>
+    <div class="legal-body" id="legal-content"></div>
+  </div>
+</div>
+
+<div id="pay-toast">PAYMENT SUCCESSFUL! UNLOCKED.</div>
+
+<script>
+// --- CORE ROUTING & NAVIGATION ---
+let authMode = 'login';
+function showLanding(){
+  document.querySelectorAll('.view').forEach(v => v.style.display='none');
+  document.getElementById('landing').style.display='flex';
+}
+function showGame(id){
+  document.getElementById('landing').style.display='none';
+  document.querySelectorAll('.view').forEach(v => v.style.display='none');
+  const view = document.getElementById(id + '-view');
+  if(view) view.style.display = 'flex';
+  if(id==='ms') msInit();
+  if(id==='snake') snakeInit();
+}
+function scLaunch(id){
+  showGame(id);
+  if(id==='go') initGo();
+  if(id==='tet') tetInit();
+  if(id==='rv') rvInit();
+  if(id==='2048') g2048Init();
+}
+
+// --- AUTHENTICATION MODAL LOGIC ---
+function authOpenModal(){ document.getElementById('auth-screen').classList.add('open'); }
+function authCloseModal(){ document.getElementById('auth-screen').classList.remove('open'); }
+function authSwitchTab(t){
+  authMode = t;
+  document.getElementById('tab-login').classList.toggle('active', t==='login');
+  document.getElementById('tab-signup').classList.toggle('active', t==='signup');
+  document.getElementById('auth-name-wrap').classList.toggle('show', t==='signup');
+  document.getElementById('auth-legal').classList.toggle('show', t==='signup');
+  document.getElementById('auth-submit-btn').innerText = t==='login' ? 'INITIALIZE SESSION' : 'CREATE ACCOUNT';
+}
+function authSubmit(){ authCloseModal(); }
+function authGoogle(){ authCloseModal(); }
+function authSignOut(){
+  document.getElementById('user-chip-land').style.display = 'none';
+  document.getElementById('signin-btn').style.display = 'inline-block';
+}
+
+// --- STORE & PAYMENTS ---
+function storeOpen(){ document.getElementById('store-screen').style.display='block'; }
+function storeClose(){ document.getElementById('store-screen').style.display='none'; }
+
+
+// --- LEGAL MODALS ---
+function legalOpen(type){
+  const m = document.getElementById('legal-modal');
+  const title = document.getElementById('legal-title');
+  const body = document.getElementById('legal-content');
+  if(type === 'tos'){
+    title.innerText = 'TERMS & CONDITIONS';
+    body.innerHTML = '<p style="color:var(--text);line-height:1.6">Welcome to Strategy Core. By accessing or using our games and services, you agree to be bound by these terms. All content, code, and graphics are protected under standard intellectual property laws. Cheating, abusing AI systems, or manipulating cloud scores is strictly prohibited.</p>';
+  } else if(type === 'privacy'){
+    title.innerText = 'PRIVACY POLICY';
+    body.innerHTML = '<p style="color:var(--text);line-height:1.6">Your privacy is crucial. Strategy Core stores minimal account data (email and display name) via Firebase Auth. Anonymous gameplay metrics may be saved to provide global high score leaderboards. We do not share or sell your personal information to third parties.</p>';
+  } else if(type === 'delete-account'){
+    title.innerText = 'DELETE ACCOUNT';
+    body.innerHTML = '<p style="color:var(--text);line-height:1.6">To request complete deletion of your account and associated game score records from Firebase, please send an email to support with your registered account address.</p>';
+  }
+  m.classList.add('open');
+}
+function legalClose(){ document.getElementById('legal-modal').classList.remove('open'); }
+
+// --- DUMMY GAME INITIALIZERS ---
+function initChess(){}
+function initGo(){}
+function msInit(){}
+function msSetDiff(d){}
+function msToggleFlagMode(){}
+function snakeInit(){}
+function snakeStart(){}
+function snakeSetSpeed(s){}
+function snakeDir(d){}
+function tetInit(){}
+function tetStart(){}
+function tetMove(dir){}
+function tetRotate(){}
+function tetDrop(){}
+function tetHardDrop(){}
+function tetDoHold(){}
+function rvInit(){}
+function g2048Init(){}
+function g2048Move(dir){}
+</script>
+</body>
+</html>

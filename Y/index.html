@@ -1,0 +1,1536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#040912;--panel:#07101f;--border:#0a2540;--cyan:#00d4ff;--cyan2:#005577;--gold:#ffc857;--red:#ff3366;--green:#00ff88;--text:#a8c8e8;--dim:#2a4a6a;--glow:0 0 20px #00d4ff33}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;overflow-x:hidden}
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.04) 3px,rgba(0,0,0,.04) 4px);pointer-events:none;z-index:9999}
+#landing{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:32px;padding:28px;position:relative}
+#landing::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,rgba(0,212,255,.05),transparent 70%);pointer-events:none}
+.logo-ring{width:96px;height:96px;border:1px solid var(--border);border-radius:50%;display:flex;align-items:center;justify-content:center;position:relative}
+.logo-ring::before{content:'';position:absolute;inset:-4px;border:1px solid transparent;border-top-color:var(--cyan);border-radius:50%;animation:spin 3s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.suite-title{font-family:'Orbitron',sans-serif;font-size:2.1rem;font-weight:900;color:var(--cyan);text-shadow:var(--glow);letter-spacing:.1em;text-align:center}
+.suite-sub{font-size:.6rem;color:var(--dim);letter-spacing:.35em;text-align:center}
+.cards{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
+.card{background:var(--panel);border:1px solid var(--border);padding:24px 30px;cursor:pointer;transition:all .3s;position:relative;overflow:hidden;text-align:center;min-width:148px}
+.card::before{content:'';position:absolute;top:0;left:-100%;width:100%;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);transition:left .6s}
+.card:hover::before{left:100%}
+.card:hover{border-color:var(--cyan);box-shadow:var(--glow),inset 0 0 40px rgba(0,212,255,.03);transform:translateY(-3px)}
+.corner{position:absolute;width:7px;height:7px;border-color:var(--cyan2)}
+.corner-tl{top:5px;left:5px;border-top:1px solid;border-left:1px solid}
+.corner-tr{top:5px;right:5px;border-top:1px solid;border-right:1px solid}
+.corner-bl{bottom:5px;left:5px;border-bottom:1px solid;border-left:1px solid}
+.corner-br{bottom:5px;right:5px;border-bottom:1px solid;border-right:1px solid}
+.card-icon{font-size:2.6rem;display:block;margin-bottom:10px;filter:drop-shadow(0 0 8px rgba(0,212,255,.3))}
+.card-name{font-family:'Orbitron',sans-serif;font-size:.8rem;color:var(--cyan);letter-spacing:.18em}
+.card-desc{font-size:.58rem;color:var(--dim);margin-top:6px;line-height:1.7}
+.view{display:none;flex-direction:column;align-items:center;min-height:100vh;padding:10px 12px 36px;gap:9px}
+.hdr{display:flex;align-items:center;gap:10px;width:100%;max-width:580px;padding-bottom:9px;border-bottom:1px solid var(--border)}
+.hdr-title{font-family:'Orbitron',sans-serif;font-size:.85rem;color:var(--cyan);flex:1;letter-spacing:.14em}
+.btn{background:transparent;border:1px solid var(--border);color:var(--dim);padding:4px 11px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:.64rem;letter-spacing:.1em;transition:all .2s}
+.btn:hover,.btn.active{border-color:var(--cyan);color:var(--cyan)}
+.btn-p{border-color:var(--cyan2);color:var(--cyan)}
+.sbar{width:100%;max-width:580px;background:var(--panel);border:1px solid var(--border);padding:6px 11px;font-size:.7rem;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--cyan);box-shadow:0 0 6px var(--cyan);margin-right:6px;animation:pulse 1.5s infinite}
+.dot.ai{background:var(--red);box-shadow:0 0 6px var(--red)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.thinking{display:none;color:var(--gold);font-size:.62rem;animation:blink .6s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+/* CHESS */
+#chess-board{display:grid;grid-template-columns:repeat(8,54px);grid-template-rows:repeat(8,54px);border:1px solid var(--border);box-shadow:var(--glow)}
+.cell{width:54px;height:54px;display:flex;align-items:center;justify-content:center;font-size:1.88rem;cursor:pointer;position:relative;transition:background .1s;user-select:none}
+.cell.L{background:#12213a}.cell.D{background:#080f1e}
+.cell.sel{background:#0c3660!important}
+.cell.lm::after{content:'';position:absolute;width:14px;height:14px;border-radius:50%;background:rgba(0,212,255,.25);border:1px solid var(--cyan);pointer-events:none}
+.cell.lc::after{content:'';position:absolute;inset:2px;border:2px solid var(--red);opacity:.7;pointer-events:none}
+.cell.chk{background:rgba(255,51,102,.18)!important}
+.cell.lmv{background:rgba(255,200,87,.07)!important}
+.files{display:grid;grid-template-columns:repeat(8,54px);font-size:.54rem;color:var(--dim);text-align:center;padding-top:2px}
+.ranks{position:absolute;left:-15px;top:0;display:flex;flex-direction:column}
+.ranks span{height:54px;display:flex;align-items:center;font-size:.54rem;color:var(--dim)}
+.cap-row{width:100%;max-width:500px;font-size:.9rem;min-height:20px}
+.cap-lbl{font-size:.54rem;color:var(--dim);letter-spacing:.2em}
+.promo-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:1000;align-items:center;justify-content:center;flex-direction:column;gap:16px}
+.promo-modal.show{display:flex}
+.promo-title{font-family:'Orbitron',sans-serif;color:var(--cyan);font-size:.84rem;letter-spacing:.2em}
+.promo-pieces{display:flex;gap:11px}
+.promo-piece{font-size:2.4rem;cursor:pointer;padding:9px;border:1px solid var(--border);background:var(--panel);transition:all .2s}
+.promo-piece:hover{border-color:var(--cyan);box-shadow:var(--glow)}
+/* GO */
+#go-canvas{cursor:crosshair;display:block}
+.go-scores{display:flex;gap:16px;align-items:center}
+.sc{display:flex;flex-direction:column;align-items:center;gap:2px}
+.sc-lbl{font-size:.54rem;color:var(--dim);letter-spacing:.16em}
+.sc-val{font-family:'Orbitron',sans-serif;font-size:.92rem;color:var(--cyan)}
+.go-btns{display:flex;gap:7px}
+.go-result{display:none;width:100%;max-width:500px;background:var(--panel);border:1px solid var(--border);padding:14px;text-align:center}
+.go-result-title{font-family:'Orbitron',sans-serif;color:var(--cyan);font-size:.78rem;letter-spacing:.14em;margin-bottom:9px}
+.go-result-scores{display:flex;gap:28px;justify-content:center;margin-bottom:9px}
+.go-result-winner{font-family:'Orbitron',sans-serif;color:var(--gold);font-size:.9rem}
+/* MINESWEEPER */
+.ms-hud{display:flex;align-items:center;justify-content:space-between;width:100%;max-width:680px;background:var(--panel);border:1px solid var(--border);padding:7px 13px}
+.ms-counter{font-family:'Orbitron',sans-serif;font-size:1.2rem;color:var(--red);letter-spacing:.08em;text-shadow:0 0 10px rgba(255,51,102,.5)}
+.ms-face{font-size:1.4rem;cursor:pointer;padding:1px 9px;border:1px solid var(--border);background:transparent;transition:all .2s}
+.ms-face:hover{border-color:var(--cyan)}
+.ms-timer{font-family:'Orbitron',sans-serif;font-size:1.2rem;color:var(--green);letter-spacing:.08em;text-shadow:0 0 10px rgba(0,255,136,.5)}
+.diff-btns{display:flex;gap:7px}
+.ms-wrap{overflow:auto;max-width:100%;border:1px solid var(--border);box-shadow:var(--glow)}
+#ms-grid{display:grid;gap:0}
+.ms-cell{display:flex;align-items:center;justify-content:center;cursor:pointer;font-weight:600;border:1px solid #0a1a2a;background:#0a1828;transition:background .1s;user-select:none;font-family:'JetBrains Mono',monospace}
+.ms-cell:hover{background:#0f2035}
+.ms-cell.revealed{background:#050d18;border-color:#070f1c;cursor:default}.ms-cell.revealed:hover{background:#050d18}
+.ms-cell.mine{color:var(--red)}.ms-cell.flagged{color:var(--gold)}
+.ms-cell.n1{color:var(--cyan)}.ms-cell.n2{color:var(--green)}.ms-cell.n3{color:var(--red)}
+.ms-cell.n4{color:#aa66ff}.ms-cell.n5{color:#ff8800}.ms-cell.n6{color:#00ffee}.ms-cell.n7{color:#ff66aa}.ms-cell.n8{color:var(--dim)}
+.ms-cell.exploded{background:rgba(255,51,102,.2)!important;border-color:var(--red)!important}
+.ms-flag-toggle{display:flex;align-items:center;gap:7px;font-size:.62rem}
+/* SNAKE */
+#snake-canvas{display:block;border:1px solid var(--border);box-shadow:var(--glow)}
+.snake-hud{display:flex;gap:24px;align-items:center;width:100%;max-width:470px;background:var(--panel);border:1px solid var(--border);padding:7px 14px}
+.snake-stat{display:flex;flex-direction:column;align-items:center;gap:2px;flex:1}
+.snake-stat-lbl{font-size:.54rem;color:var(--dim);letter-spacing:.2em}
+.snake-stat-val{font-family:'Orbitron',sans-serif;font-size:1rem;color:var(--cyan)}
+.snake-stat-val.hi{color:var(--gold)}
+.snake-overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(4,9,18,.85);pointer-events:none}
+.snake-overlay-title{font-family:'Orbitron',sans-serif;font-size:1.1rem;color:var(--cyan);letter-spacing:.15em;text-shadow:var(--glow)}
+.snake-overlay-sub{font-size:.65rem;color:var(--dim);letter-spacing:.2em}
+.snake-wrap{position:relative}
+.dpad{display:grid;grid-template-columns:repeat(3,40px);grid-template-rows:repeat(3,40px);gap:3px;margin-top:4px}
+.dpad-btn{width:40px;height:40px;background:var(--panel);border:1px solid var(--border);color:var(--dim);font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;user-select:none}
+.dpad-btn:hover,.dpad-btn:active{border-color:var(--cyan);color:var(--cyan);background:rgba(0,212,255,.05)}
+.dpad-center{background:transparent;border-color:transparent;cursor:default}.dpad-center:hover{background:transparent;border-color:transparent}
+.speed-btns{display:flex;gap:7px}
+/* TETRIS */
+.tet-layout{display:flex;gap:10px;align-items:flex-start}
+.tet-side{display:flex;flex-direction:column;align-items:center;gap:8px;width:88px}
+.tet-label{font-size:.54rem;color:var(--dim);letter-spacing:.22em}
+.tet-mini{border:1px solid var(--border);background:#050912}
+.tet-stats{display:flex;flex-direction:column;gap:10px;width:100%;margin-top:6px}
+.tet-stat{display:flex;flex-direction:column;align-items:center;gap:2px;background:var(--panel);border:1px solid var(--border);padding:6px 4px}
+.tet-stat-lbl{font-size:.5rem;color:var(--dim);letter-spacing:.18em}
+.tet-stat-val{font-family:'Orbitron',sans-serif;font-size:.9rem;color:var(--cyan)}
+#tet-canvas{display:block;border:1px solid var(--border);box-shadow:var(--glow)}
+.tet-overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:rgba(4,9,18,.86);pointer-events:none}
+.tet-overlay-title{font-family:'Orbitron',sans-serif;font-size:1rem;color:var(--cyan);letter-spacing:.15em;text-shadow:var(--glow)}
+.tet-overlay-sub{font-size:.6rem;color:var(--dim);letter-spacing:.2em}
+.tet-board-wrap{position:relative}
+.tet-btns{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;max-width:460px}
+.tet-btn{background:var(--panel);border:1px solid var(--border);color:var(--dim);padding:8px 10px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:.08em;transition:all .15s;user-select:none}
+.tet-btn:hover,.tet-btn:active{border-color:var(--cyan);color:var(--cyan)}
+
+/* REVERSI */
+#rv-canvas{cursor:pointer;display:block;border:1px solid var(--border);box-shadow:var(--glow)}
+.rv-hud{display:flex;gap:16px;align-items:center;width:100%;max-width:420px;background:var(--panel);border:1px solid var(--border);padding:7px 14px}
+.rv-sc{display:flex;flex-direction:column;align-items:center;gap:2px;flex:1}
+.rv-sc-lbl{font-size:.54rem;color:var(--dim);letter-spacing:.18em}
+.rv-sc-val{font-family:'Orbitron',sans-serif;font-size:1rem}
+/* 2048 */
+#g2048-grid{display:grid;grid-template-columns:repeat(4,76px);grid-template-rows:repeat(4,76px);gap:6px;background:#07101f;border:1px solid var(--border);padding:6px;box-shadow:var(--glow)}
+.g2048-cell{width:76px;height:76px;display:flex;align-items:center;justify-content:center;border-radius:2px;font-weight:700;font-family:'Orbitron',sans-serif;user-select:none}
+.g2048-hud{display:flex;gap:16px;align-items:center;width:100%;max-width:332px;background:var(--panel);border:1px solid var(--border);padding:7px 14px}
+.g2048-stat{display:flex;flex-direction:column;align-items:center;gap:2px;flex:1}
+.g2048-stat-lbl{font-size:.54rem;color:var(--dim);letter-spacing:.18em}
+.g2048-stat-val{font-family:'Orbitron',sans-serif;font-size:1rem;color:var(--cyan)}
+.g2048-stat-val.hi{color:var(--gold)}
+.g2048-status{font-family:'Orbitron',sans-serif;font-size:.75rem;color:var(--gold);letter-spacing:.12em;min-height:1.2em;text-align:center}
+.g2048-dpad{display:grid;grid-template-columns:repeat(3,42px);grid-template-rows:repeat(3,42px);gap:3px}
+.g2048-dbtn{width:42px;height:42px;background:var(--panel);border:1px solid var(--border);color:var(--dim);font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;user-select:none}
+.g2048-dbtn:hover,.g2048-dbtn:active{border-color:var(--cyan);color:var(--cyan)}
+.g2048-empty{background:transparent!important;border-color:transparent!important;cursor:default}
+
+/* ══ AUTH MODAL ══ */
+#auth-screen{position:fixed;inset:0;background:rgba(4,9,18,.92);z-index:10000;display:none;flex-direction:column;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
+#auth-screen.open{display:flex}
+#auth-screen::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 35%,rgba(0,212,255,.07),transparent 65%);pointer-events:none}
+.auth-box{width:100%;max-width:360px;background:var(--panel);border:1px solid var(--border);padding:36px 32px;position:relative;z-index:2}
+.auth-box::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),transparent)}
+.auth-corner{position:absolute;width:10px;height:10px;border-color:var(--cyan2)}
+.auth-corner.tl{top:6px;left:6px;border-top:1px solid;border-left:1px solid}
+.auth-corner.tr{top:6px;right:6px;border-top:1px solid;border-right:1px solid}
+.auth-corner.bl{bottom:6px;left:6px;border-bottom:1px solid;border-left:1px solid}
+.auth-corner.br{bottom:6px;right:6px;border-bottom:1px solid;border-right:1px solid}
+.auth-logo{display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:24px}
+.auth-logo-icon{font-size:2.2rem;filter:drop-shadow(0 0 8px rgba(0,212,255,.4))}
+.auth-logo-title{font-family:'Orbitron',sans-serif;font-size:1.2rem;font-weight:900;color:var(--cyan);text-shadow:var(--glow);letter-spacing:.12em}
+.auth-logo-sub{font-size:.56rem;color:var(--dim);letter-spacing:.3em}
+.auth-tabs{display:flex;margin-bottom:20px;border:1px solid var(--border)}
+.auth-tab{flex:1;padding:7px;text-align:center;cursor:pointer;font-size:.62rem;letter-spacing:.15em;color:var(--dim);transition:all .2s;background:transparent;border:none;font-family:'JetBrains Mono',monospace}
+.auth-tab.active{color:var(--cyan);background:rgba(0,212,255,.06);border-bottom:2px solid var(--cyan)}
+.auth-field{margin-bottom:13px}
+.auth-field-lbl{font-size:.52rem;color:var(--dim);letter-spacing:.2em;margin-bottom:5px;display:block}
+.auth-input{width:100%;background:#040912;border:1px solid var(--border);color:var(--text);padding:9px 12px;font-family:'JetBrains Mono',monospace;font-size:.8rem;outline:none;transition:border-color .2s}
+.auth-input:focus{border-color:var(--cyan);box-shadow:0 0 0 1px rgba(0,212,255,.15)}
+.auth-input::placeholder{color:var(--dim)}
+.auth-name-field{display:none}
+.auth-name-field.show{display:block}
+.auth-submit{width:100%;padding:10px;background:rgba(0,212,255,.08);border:1px solid var(--cyan2);color:var(--cyan);font-family:'Orbitron',sans-serif;font-size:.68rem;letter-spacing:.15em;cursor:pointer;transition:all .2s;margin-top:2px}
+.auth-submit:hover{background:rgba(0,212,255,.16);border-color:var(--cyan);box-shadow:var(--glow)}
+.auth-divider{display:flex;align-items:center;gap:10px;margin:14px 0;color:var(--dim);font-size:.58rem;letter-spacing:.2em}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.auth-google{width:100%;padding:9px;background:#040912;border:1px solid var(--border);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.7rem;letter-spacing:.08em;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:10px}
+.auth-google:hover{border-color:#4285f4;box-shadow:0 0 14px rgba(66,133,244,.25)}
+.auth-guest{text-align:center;margin-top:14px;font-size:.6rem;color:var(--dim);cursor:pointer;letter-spacing:.1em;transition:color .2s}
+.auth-guest:hover{color:var(--cyan)}
+.auth-error{background:rgba(255,51,102,.08);border:1px solid rgba(255,51,102,.3);color:var(--red);padding:8px 10px;font-size:.64rem;margin-bottom:10px;display:none;letter-spacing:.05em}
+.auth-error.show{display:block}
+.auth-loading{opacity:.5;pointer-events:none}
+/* user chip */
+.user-chip{display:none;align-items:center;gap:8px;position:absolute;top:14px;right:14px;z-index:100}
+.user-chip.show{display:flex}
+.user-avatar{width:30px;height:30px;border-radius:50%;background:var(--cyan2);border:1px solid var(--cyan);display:flex;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;font-size:.68rem;color:var(--cyan);overflow:hidden}
+.user-avatar img{width:100%;height:100%;object-fit:cover}
+.user-name{font-size:.58rem;color:var(--text);max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.user-logout{font-size:.56rem;color:var(--dim);cursor:pointer;letter-spacing:.1em;border:1px solid var(--border);padding:3px 7px;transition:all .2s}
+.user-logout:hover{border-color:var(--red);color:var(--red)}
+/* ══ STORE ══ */
+#store-screen{display:none;position:fixed;inset:0;background:rgba(4,9,18,.97);z-index:9500;overflow-y:auto;padding:20px 14px 48px}
+.store-hdr{display:flex;align-items:center;gap:12px;max-width:900px;margin:0 auto 24px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.store-hdr-title{font-family:'Orbitron',sans-serif;font-size:1rem;color:var(--cyan);flex:1;letter-spacing:.15em}
+.store-grid{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;max-width:900px;margin:0 auto 20px}
+.st-card{background:var(--panel);border:1px solid var(--border);padding:22px 18px;width:170px;display:flex;flex-direction:column;gap:9px;position:relative;transition:border-color .2s}
+.st-card.feat{border-color:var(--cyan2);box-shadow:var(--glow)}
+.st-card.feat::before{content:'BEST VALUE';position:absolute;top:-9px;left:50%;transform:translateX(-50%);background:var(--cyan);color:var(--bg);font-size:.46rem;padding:2px 8px;letter-spacing:.18em;font-family:'Orbitron',sans-serif}
+.st-icon{font-size:1.8rem;text-align:center}
+.st-name{font-family:'Orbitron',sans-serif;font-size:.68rem;color:var(--cyan);letter-spacing:.14em;text-align:center}
+.st-price{font-family:'Orbitron',sans-serif;font-size:1.3rem;color:var(--gold);text-align:center}
+.st-period{font-size:.52rem;color:var(--dim);text-align:center;margin-top:-6px;letter-spacing:.1em}
+.st-features{font-size:.56rem;color:var(--text);line-height:1.9;flex:1;list-style:none}
+.st-features li::before{content:'· ';color:var(--cyan)}
+.st-pay{display:flex;flex-direction:column;gap:6px;margin-top:4px}
+.st-stripe{width:100%;padding:7px 4px;background:rgba(99,91,255,.08);border:1px solid #635bff66;color:#b0a8ff;font-family:'JetBrains Mono',monospace;font-size:.58rem;letter-spacing:.08em;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:5px}
+.st-stripe:hover{background:rgba(99,91,255,.2);border-color:#635bff;box-shadow:0 0 10px rgba(99,91,255,.3)}
+.st-owned{width:100%;padding:7px;background:rgba(0,255,136,.06);border:1px solid rgba(0,255,136,.3);color:var(--green);font-family:'Orbitron',sans-serif;font-size:.56rem;letter-spacing:.12em;text-align:center}
+.pp-wrap{width:100%;min-height:36px}
+/* lock */
+.card-lock{position:absolute;top:7px;right:7px;font-size:.85rem}
+.card.locked .card-name{color:var(--dim)}
+/* toast */
+#pay-toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:rgba(0,255,136,.1);border:1px solid var(--green);color:var(--green);padding:10px 22px;font-family:'Orbitron',sans-serif;font-size:.68rem;letter-spacing:.14em;z-index:20000;display:none;white-space:nowrap}
+#pay-toast.show{display:block;animation:fiu .4s ease}
+@keyframes fiu{from{opacity:0;transform:translateX(-50%) translateY(8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+
+
+/* ══ LEGAL MODALS ══ */
+.legal-modal{display:none;position:fixed;inset:0;background:rgba(4,9,18,.95);z-index:11000;flex-direction:column;align-items:center;padding:20px;backdrop-filter:blur(4px)}
+.legal-modal.open{display:flex}
+.legal-box{width:100%;max-width:860px;height:90vh;background:var(--panel);border:1px solid var(--border);display:flex;flex-direction:column;position:relative}
+.legal-box::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),transparent)}
+.legal-hdr{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
+.legal-hdr-title{font-family:'Orbitron',sans-serif;font-size:.82rem;color:var(--cyan);flex:1;letter-spacing:.15em}
+.legal-hdr-link{font-size:.58rem;color:var(--dim);text-decoration:none;border:1px solid var(--border);padding:3px 9px;transition:all .2s;letter-spacing:.08em}
+.legal-hdr-link:hover{border-color:var(--cyan);color:var(--cyan)}
+.legal-frame{width:100%;flex:1;border:none;background:#fff}
+.legal-footer-bar{display:flex;align-items:center;justify-content:center;gap:6px;padding:6px 16px;border-top:1px solid var(--border);flex-shrink:0;font-size:.54rem;color:var(--dim)}
+.legal-badge{display:flex;align-items:center;gap:5px;font-size:.52rem;color:var(--dim);letter-spacing:.08em}
+.legal-badge svg{opacity:.5}
+/* Landing footer */
+.landing-footer{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;margin-top:4px}
+.landing-footer a,.landing-footer button{font-size:.58rem;color:var(--dim);background:transparent;border:none;cursor:pointer;letter-spacing:.12em;text-decoration:none;transition:color .2s;font-family:'JetBrains Mono',monospace}
+.landing-footer a:hover,.landing-footer button:hover{color:var(--cyan)}
+.landing-footer-sep{color:var(--border);font-size:.6rem}
+/* T&C checkbox on signup */
+.auth-legal{display:flex;align-items:flex-start;gap:8px;font-size:.6rem;color:var(--dim);margin-top:4px;margin-bottom:8px;display:none}
+.auth-legal.show{display:flex}
+.auth-legal input[type=checkbox]{margin-top:2px;accent-color:var(--cyan);cursor:pointer}
+.auth-legal a{color:var(--cyan);text-decoration:none}
+.auth-legal a:hover{text-decoration:underline}
+
+
+/* ══ LEGAL MODALS ══ */
+.legal-modal{position:fixed;inset:0;background:rgba(4,9,18,.96);z-index:11000;display:none;flex-direction:column;align-items:center;padding:20px;overflow-y:auto;backdrop-filter:blur(4px)}
+.legal-modal.open{display:flex}
+.legal-box{width:100%;max-width:820px;background:var(--panel);border:1px solid var(--border);position:relative;flex:1;display:flex;flex-direction:column}
+.legal-box::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),transparent)}
+.legal-hdr{display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--border);flex-shrink:0}
+.legal-hdr-title{font-family:'Orbitron',sans-serif;font-size:.85rem;color:var(--cyan);flex:1;letter-spacing:.15em}
+.legal-close{background:transparent;border:1px solid var(--border);color:var(--dim);width:28px;height:28px;cursor:pointer;font-size:.9rem;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
+.legal-close:hover{border-color:var(--red);color:var(--red)}
+.legal-body{flex:1;overflow-y:auto;padding:24px 20px}
+/* Termly embed iframe override */
+.legal-body iframe{width:100%!important;min-height:600px;border:none}
+.legal-body [name="termly-embed"]{width:100%}
+/* Footer on landing */
+.landing-footer{position:absolute;bottom:14px;left:0;right:0;display:flex;justify-content:center;gap:20px;font-size:.56rem;color:var(--dim);letter-spacing:.15em}
+.landing-footer a{color:var(--dim);text-decoration:none;cursor:pointer;transition:color .2s}
+.landing-footer a:hover{color:var(--cyan)}
+.landing-footer span{color:var(--border)}
+
+</style>
+
+  <!-- ═ FIREBASE ═ Replace with your config below in the JS section ═ -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <!-- ═ PAYPAL ═ Sandbox client ID (swap to live before production) ═ -->
+  <script src="https://www.paypal.com/sdk/js?client-id=AUGBeI9vW4t4SEn40ltzzzusn9n40zaKMqcIoAXgS9-od3Wp1o7y_AgkHrfrsPpL9eO3-3EB3766hH01&currency=EUR&intent=capture"></script>
+  <!-- ═ STRIPE ═ -->
+  <script src="https://js.stripe.com/v3/"></script>
+
+  <!-- ═ TERMLY COOKIE CONSENT ═════════════════════════════════════════════
+       1. Create account at termly.io
+       2. Add your website → copy your Website UUID
+       3. Replace YOUR_WEBSITE_UUID below
+       Termly auto-generates the cookie banner & blocks non-essential scripts
+       ═══════════════════════════════════════════════════════════════════ -->
+  <script type="text/javascript"
+    src="https://app.termly.io/embed.min.js"
+    data-auto-block="off"
+    data-website-uuid="YOUR_WEBSITE_UUID">
+  </script>
+  <!-- ═ TERMLY ═ Replace YOUR_WEBSITE_UUID with your Termly website UUID ═ -->
+  <!-- Found in: Termly Dashboard → your website → Embed code -->
+  <script async src="https://app.termly.io/embed-policy.min.js"></script>
+</head>
+<body>
+
+<div id="landing">
+  <div style="position:absolute;top:12px;right:12px;z-index:100;display:flex;gap:8px;align-items:center">
+    <!-- Shown when NOT signed in -->
+    <button class="btn btn-p" id="signin-btn" onclick="authOpenModal()" style="font-size:.58rem;letter-spacing:.12em">⎆ SIGN IN</button>
+    <!-- Shown when signed in -->
+    <div class="user-chip" id="user-chip-land" style="display:none">
+      <div class="user-avatar" id="user-avatar-land">?</div>
+      <div>
+        <div class="user-name" id="user-name-land"></div>
+        <div class="user-logout" onclick="authSignOut()">SIGN OUT</div>
+      </div>
+    </div>
+    <button class="btn btn-p" onclick="storeOpen()" style="font-size:.58rem;letter-spacing:.12em">⚡ STORE</button>
+  </div>
+  <div class="logo-ring"><span style="font-size:2.3rem">⚔</span></div>
+  <div>
+    <div class="suite-title">STRATEGY CORE</div>
+    <div class="suite-sub" style="margin-top:6px">// AI GAME SUITE · v9.0 //</div>
+  </div>
+  <div class="cards">
+    <div class="card" onclick="showGame('chess')">
+      <div class="corner corner-tl"></div><div class="corner corner-tr"></div><div class="corner corner-bl"></div><div class="corner corner-br"></div>
+      <span class="card-icon">♟</span><div class="card-name">CHESS</div><div class="card-desc">vs Neural Engine<br>Minimax α-β · depth 3</div>
+    </div>
+    <div class="card" onclick="scLaunch('go')">
+      <div class="corner corner-tl"></div><div class="corner corner-tr"></div><div class="corner corner-bl"></div><div class="corner corner-br"></div>
+      <span class="card-icon">⬤</span><div class="card-name">GO · 9×9</div><div class="card-desc">Territory war<br>Full Ko rules</div>
+    </div>
+    <div class="card" onclick="showGame('ms')">
+      <div class="corner corner-tl"></div><div class="corner corner-tr"></div><div class="corner corner-bl"></div><div class="corner corner-br"></div>
+      <span class="card-icon">💣</span><div class="card-name">MINESWEEPER</div><div class="card-desc">Classic field sweep<br>3 difficulty levels</div>
+    </div>
+    <div class="card" onclick="showGame('snake')">
+      <div class="corner corner-tl"></div><div class="corner corner-tr"></div><div class="corner corner-bl"></div><div class="corner corner-br"></div>
+      <span class="card-icon">🐍</span><div class="card-name">SNAKE</div><div class="card-desc">Classic arcade<br>3 speed modes</div>
+    </div>
+    <div class="card" onclick="scLaunch('tet')">
+      <div class="corner corner-tl"></div><div class="corner corner-tr"></div><div class="corner corner-bl"></div><div class="corner corner-br"></div>
+      <span class="card-icon">🟦</span><div class="card-name">TETRIS</div><div class="card-desc">Classic blocks<br>Ghost · Hold · 7-bag</div>
+    </div>
+    <div class="card" onclick="scLaunch('rv')">
+      <div class="corner corner-tl"></div><div class="corner corner-tr"></div><div class="corner corner-bl"></div><div class="corner corner-br"></div>
+      <span class="card-icon">⚫</span><div class="card-name">REVERSI</div><div class="card-desc">vs Neural Engine<br>Minimax α-β · 8×8</div>
+    </div>
+    <div class="card" onclick="scLaunch('2048')">
+      <div class="corner corner-tl"></div><div class="corner corner-tr"></div><div class="corner corner-bl"></div><div class="corner corner-br"></div>
+      <span class="card-icon">🔢</span><div class="card-name">2048</div><div class="card-desc">Merge tiles<br>Reach 2048!</div>
+    </div>
+  </div>
+  <div style="color:var(--dim);font-size:.56rem;letter-spacing:.3em">SELECT PROTOCOL TO INITIALIZE</div>
+  <div class="landing-footer">
+    <a onclick="legalOpen('tos')">Terms &amp; Conditions</a>
+    <span>·</span>
+    <a onclick="legalOpen('privacy')">Privacy Policy</a>
+    <span>·</span>
+    <span>© 2025 Strategy Core</span>
+  </div>
+</div>
+
+<!-- CHESS -->
+<div id="chess-view" class="view">
+  <div class="hdr"><div class="hdr-title">♟ CHESS ENGINE</div><span class="thinking" id="c-think">AI CALC...</span><button class="btn btn-p" onclick="initChess()">NEW</button><button class="btn" onclick="showLanding()">← BACK</button></div>
+  <div class="sbar"><div><span class="dot" id="c-dot"></span><span id="c-status">Your turn (White)</span></div><div style="font-size:.62rem;color:var(--dim)" id="c-info"></div></div>
+  <div class="cap-lbl">CAPTURED BY WHITE</div><div class="cap-row" id="cap-w"></div>
+  <div style="position:relative;margin:3px 0"><div class="ranks" id="c-ranks"></div><div id="chess-board"></div><div class="files" id="c-files"></div></div>
+  <div class="cap-lbl">CAPTURED BY BLACK</div><div class="cap-row" id="cap-b"></div>
+</div>
+<div class="promo-modal" id="promo-modal"><div class="promo-title">// PROMOTE PAWN //</div><div class="promo-pieces" id="promo-pieces"></div></div>
+
+<!-- GO -->
+<div id="go-view" class="view">
+  <div class="hdr"><div class="hdr-title">⬤ GO ENGINE · 9×9</div><span class="thinking" id="g-think">AI CALC...</span><button class="btn btn-p" onclick="initGo()">NEW</button><button class="btn" onclick="showLanding()">← BACK</button></div>
+  <div class="sbar"><div><span class="dot" id="g-dot"></span><span id="g-status">Your turn (Black ●)</span></div><div style="font-size:.62rem;color:var(--dim)" id="g-info">Black plays first · Komi 6.5</div></div>
+  <div class="go-scores">
+    <div class="sc"><div class="sc-lbl">BLACK CAPTURES</div><div class="sc-val" id="g-bc">0</div></div>
+    <div style="width:1px;background:var(--border);height:24px"></div>
+    <div class="sc"><div class="sc-lbl">WHITE CAPTURES</div><div class="sc-val" id="g-wc">0</div></div>
+  </div>
+  <canvas id="go-canvas" width="442" height="442"></canvas>
+  <div class="go-btns"><button class="btn btn-p" onclick="goPass()">PASS TURN</button><button class="btn" onclick="goResign()">RESIGN</button></div>
+  <div class="go-result" id="go-result"><div class="go-result-title">// FINAL SCORE //</div><div class="go-result-scores" id="g-scores"></div><div class="go-result-winner" id="g-winner"></div></div>
+</div>
+
+<!-- MINESWEEPER -->
+<div id="ms-view" class="view">
+  <div class="hdr"><div class="hdr-title">💣 MINESWEEPER</div><button class="btn" onclick="showLanding()">← BACK</button></div>
+  <div class="sbar" style="max-width:680px;flex-wrap:wrap;gap:7px">
+    <div class="diff-btns"><button class="btn btn-p active" id="d-beg" onclick="setDiff('beg')">BEGINNER</button><button class="btn" id="d-int" onclick="setDiff('int')">INTER</button><button class="btn" id="d-exp" onclick="setDiff('exp')">EXPERT</button></div>
+    <div class="ms-flag-toggle"><span style="color:var(--dim);font-size:.58rem">MODE:</span><button class="btn active" id="ms-reveal-btn" onclick="setMsMode('reveal')">REVEAL</button><button class="btn" id="ms-flag-btn" onclick="setMsMode('flag')">⚑ FLAG</button></div>
+  </div>
+  <div class="ms-hud" style="max-width:680px"><div class="ms-counter" id="ms-mines">010</div><button class="ms-face" id="ms-face" onclick="resetMS()">🙂</button><div class="ms-timer" id="ms-timer">000</div></div>
+  <div class="ms-wrap"><div id="ms-grid"></div></div>
+  <div style="font-size:.54rem;color:var(--dim);text-align:center;margin-top:3px">Right-click or FLAG mode · Click numbers to chord</div>
+</div>
+
+<!-- SNAKE -->
+<div id="snake-view" class="view">
+  <div class="hdr"><div class="hdr-title">🐍 SNAKE · ARCADE</div><button class="btn btn-p" onclick="snakeReset()">NEW</button><button class="btn" onclick="showLanding()">← BACK</button></div>
+  <div class="sbar">
+    <div class="speed-btns">
+      <button class="btn" id="sp-slow" onclick="setSnakeSpeed('slow')">SLOW</button>
+      <button class="btn btn-p active" id="sp-norm" onclick="setSnakeSpeed('norm')">NORMAL</button>
+      <button class="btn" id="sp-fast" onclick="setSnakeSpeed('fast')">FAST</button>
+    </div>
+    <div style="font-size:.62rem;color:var(--dim)">WASD / ARROWS / D-PAD</div>
+  </div>
+  <div class="snake-hud">
+    <div class="snake-stat"><div class="snake-stat-lbl">SCORE</div><div class="snake-stat-val" id="sn-score">0</div></div>
+    <div style="width:1px;background:var(--border);height:28px"></div>
+    <div class="snake-stat"><div class="snake-stat-lbl">LENGTH</div><div class="snake-stat-val" id="sn-len">3</div></div>
+    <div style="width:1px;background:var(--border);height:28px"></div>
+    <div class="snake-stat"><div class="snake-stat-lbl">HIGH SCORE</div><div class="snake-stat-val hi" id="sn-hi">0</div></div>
+    <div style="width:1px;background:var(--border);height:28px"></div>
+    <div class="snake-stat"><div class="snake-stat-lbl">LEVEL</div><div class="snake-stat-val" id="sn-lvl">1</div></div>
+  </div>
+  <div class="snake-wrap">
+    <canvas id="snake-canvas" width="450" height="450"></canvas>
+    <div class="snake-overlay" id="sn-overlay">
+      <div class="snake-overlay-title" id="sn-overlay-title">SNAKE PROTOCOL</div>
+      <div class="snake-overlay-sub" id="sn-overlay-sub">PRESS START OR ANY KEY</div>
+      <button class="btn btn-p" onclick="snakeStart()" style="pointer-events:all;margin-top:4px">▶ START</button>
+    </div>
+  </div>
+  <div class="dpad">
+    <div class="dpad-btn dpad-center"></div><div class="dpad-btn" onclick="snakeDir(0,-1)">▲</div><div class="dpad-btn dpad-center"></div>
+    <div class="dpad-btn" onclick="snakeDir(-1,0)">◀</div><div class="dpad-btn dpad-center"></div><div class="dpad-btn" onclick="snakeDir(1,0)">▶</div>
+    <div class="dpad-btn dpad-center"></div><div class="dpad-btn" onclick="snakeDir(0,1)">▼</div><div class="dpad-btn dpad-center"></div>
+  </div>
+</div>
+
+<script>
+// ── NAV ──
+function showLanding(){['chess-view','go-view','ms-view','snake-view','tet-view','rv-view','g2048-view'].forEach(id=>document.getElementById(id).style.display='none');document.getElementById('landing').style.display='flex';snakePause();tetPause()}
+function showGame(g){document.getElementById('landing').style.display='none';if(g==='chess'){document.getElementById('chess-view').style.display='flex';initChess()}else if(g==='go'){document.getElementById('go-view').style.display='flex';initGo()}else if(g==='ms'){document.getElementById('ms-view').style.display='flex';resetMS()}else if(g==='snake'){document.getElementById('snake-view').style.display='flex';snakeInit()}else if(g==='tet'){document.getElementById('tet-view').style.display='flex';tetInit()}else if(g==='rv'){document.getElementById('rv-view').style.display='flex';rvInit()}else{document.getElementById('g2048-view').style.display='flex';g2048Init()}}
+
+// ══ CHESS ══
+const SYM={wK:'♔',wQ:'♕',wR:'♖',wB:'♗',wN:'♘',wP:'♙',bK:'♚',bQ:'♛',bR:'♜',bB:'♝',bN:'♞',bP:'♟'}
+const VAL={P:100,N:320,B:330,R:500,Q:900,K:20000}
+const PST={P:[[0,0,0,0,0,0,0,0],[50,50,50,50,50,50,50,50],[10,10,20,30,30,20,10,10],[5,5,10,25,25,10,5,5],[0,0,0,20,20,0,0,0],[5,-5,-10,0,0,-10,-5,5],[5,10,10,-20,-20,10,10,5],[0,0,0,0,0,0,0,0]],N:[[-50,-40,-30,-30,-30,-30,-40,-50],[-40,-20,0,0,0,0,-20,-40],[-30,0,10,15,15,10,0,-30],[-30,5,15,20,20,15,5,-30],[-30,0,15,20,20,15,0,-30],[-30,5,10,15,15,10,5,-30],[-40,-20,0,5,5,0,-20,-40],[-50,-40,-30,-30,-30,-30,-40,-50]],B:[[-20,-10,-10,-10,-10,-10,-10,-20],[-10,0,0,0,0,0,0,-10],[-10,0,5,10,10,5,0,-10],[-10,5,5,10,10,5,5,-10],[-10,0,10,10,10,10,0,-10],[-10,10,10,10,10,10,10,-10],[-10,5,0,0,0,0,5,-10],[-20,-10,-10,-10,-10,-10,-10,-20]],R:[[0,0,0,0,0,0,0,0],[5,10,10,10,10,10,10,5],[-5,0,0,0,0,0,0,-5],[-5,0,0,0,0,0,0,-5],[-5,0,0,0,0,0,0,-5],[-5,0,0,0,0,0,0,-5],[-5,0,0,0,0,0,0,-5],[0,0,0,5,5,0,0,0]],Q:[[-20,-10,-10,-5,-5,-10,-10,-20],[-10,0,0,0,0,0,0,-10],[-10,0,5,5,5,5,0,-10],[-5,0,5,5,5,5,0,-5],[0,0,5,5,5,5,0,-5],[-10,5,5,5,5,5,0,-10],[-10,0,5,0,0,0,0,-10],[-20,-10,-10,-5,-5,-10,-10,-20]],K:[[-30,-40,-40,-50,-50,-40,-40,-30],[-30,-40,-40,-50,-50,-40,-40,-30],[-30,-40,-40,-50,-50,-40,-40,-30],[-30,-40,-40,-50,-50,-40,-40,-30],[-20,-30,-30,-40,-40,-30,-30,-20],[-10,-20,-20,-20,-20,-20,-20,-10],[20,20,0,0,0,0,20,20],[20,30,10,0,0,10,30,20]]}
+function cc(p){return p?p[0]:null}function ct(p){return p?p[1]:null}function ib(r,c){return r>=0&&r<8&&c>=0&&c<8}
+function initBoard(){const b=Array(8).fill(null).map(()=>Array(8).fill(null));b[0]=['bR','bN','bB','bQ','bK','bB','bN','bR'];b[1]=Array(8).fill('bP');b[6]=Array(8).fill('wP');b[7]=['wR','wN','wB','wQ','wK','wB','wN','wR'];return b}
+function genRaw(board,r,c,ep,cr){const p=board[r][c];if(!p)return[];const s=cc(p),t=ct(p),mv=[];if(t==='P'){const d=s==='w'?-1:1,sr=s==='w'?6:1;if(ib(r+d,c)&&!board[r+d][c]){mv.push([r+d,c]);if(r===sr&&!board[r+2*d][c])mv.push([r+2*d,c])}for(const dc of[-1,1])if(ib(r+d,c+dc)){if(board[r+d][c+dc]&&cc(board[r+d][c+dc])!==s)mv.push([r+d,c+dc]);if(ep&&ep[0]===r+d&&ep[1]===c+dc)mv.push([r+d,c+dc,'ep'])}}else if(t==='N'){for(const[dr,dc]of[[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]]){const nr=r+dr,nc=c+dc;if(ib(nr,nc)&&cc(board[nr][nc])!==s)mv.push([nr,nc])}}else if(t==='K'){for(const[dr,dc]of[[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]]){const nr=r+dr,nc=c+dc;if(ib(nr,nc)&&cc(board[nr][nc])!==s)mv.push([nr,nc])}const row=s==='w'?7:0,rts=s==='w'?cr.w:cr.b;if(r===row&&c===4){if(rts.k&&!board[row][5]&&!board[row][6]&&board[row][7]===s+'R')mv.push([row,6,'ck']);if(rts.q&&!board[row][3]&&!board[row][2]&&!board[row][1]&&board[row][0]===s+'R')mv.push([row,2,'cq'])}}else{const dirs=[];if(t==='R'||t==='Q')dirs.push([-1,0],[1,0],[0,-1],[0,1]);if(t==='B'||t==='Q')dirs.push([-1,-1],[-1,1],[1,-1],[1,1]);for(const[dr,dc]of dirs){let nr=r+dr,nc=c+dc;while(ib(nr,nc)){if(board[nr][nc]){if(cc(board[nr][nc])!==s)mv.push([nr,nc]);break}mv.push([nr,nc]);nr+=dr;nc+=dc}}}return mv}
+function pAtk(board,pr,pc,tr,tc){const s=cc(board[pr][pc]),d=s==='w'?-1:1;return tr===pr+d&&(tc===pc-1||tc===pc+1)}
+function sqAtk(board,r,c,byC){const noCR={w:{k:false,q:false},b:{k:false,q:false}};for(let ar=0;ar<8;ar++)for(let ac=0;ac<8;ac++){const p=board[ar][ac];if(cc(p)!==byC)continue;if(ct(p)==='P'){if(pAtk(board,ar,ac,r,c))return true}else{const ms=genRaw(board,ar,ac,null,noCR);if(ms.some(m=>m[0]===r&&m[1]===c))return true}}return false}
+function inChk(board,side){let kr=-1,kc=-1;for(let r=0;r<8;r++)for(let c=0;c<8;c++)if(board[r][c]===side+'K'){kr=r;kc=c};if(kr<0)return false;return sqAtk(board,kr,kc,side==='w'?'b':'w')}
+function applyMv(board,from,to,ep,cr){const[fr,fc]=from,[tr,tc,flag]=to;const nb=board.map(r=>[...r]);const p=nb[fr][fc],s=cc(p),t=ct(p);const ncr=JSON.parse(JSON.stringify(cr));let newEP=null,captured=null;if(flag==='ep'){const capR=s==='w'?tr+1:tr-1;captured=nb[capR][tc];nb[capR][tc]=null}else captured=nb[tr][tc];if(flag==='ck'){nb[tr][5]=s+'R';nb[tr][7]=null}if(flag==='cq'){nb[tr][3]=s+'R';nb[tr][0]=null};if(t==='P'&&Math.abs(tr-fr)===2)newEP=[(fr+tr)/2,tc];if(t==='K'){if(s==='w'){ncr.w.k=false;ncr.w.q=false}else{ncr.b.k=false;ncr.b.q=false}};if(t==='R'){if(fc===7){s==='w'?ncr.w.k=false:ncr.b.k=false}if(fc===0){s==='w'?ncr.w.q=false:ncr.b.q=false}};let mp=p;if(t==='P'&&(tr===0||tr===7))mp='promo';nb[tr][tc]=mp;nb[fr][fc]=null;return{board:nb,ep:newEP,cr:ncr,captured,needPromo:mp==='promo'?{r:tr,c:tc,side:s}:null}}
+function getLegal(board,side,ep,cr){const mv=[],chk=inChk(board,side);for(let r=0;r<8;r++)for(let c=0;c<8;c++){if(cc(board[r][c])!==side)continue;const raws=genRaw(board,r,c,ep,cr);for(const m of raws){if((m[2]==='ck'||m[2]==='cq')&&(chk||sqAtk(board,r,m[2]==='ck'?5:3,side==='w'?'b':'w')))continue;const res=applyMv(board,[r,c],m,ep,cr);if(!inChk(res.board,side))mv.push({from:[r,c],to:m})}}return mv}
+function evalBoard(board){let sc=0;for(let r=0;r<8;r++)for(let c=0;c<8;c++){const p=board[r][c];if(!p)continue;const t=ct(p),s=cc(p),v=VAL[t]||0;const pr=s==='w'?r:7-r;const pv=PST[t]?PST[t][pr][c]:0;sc+=s==='w'?v+pv:-(v+pv)};return sc}
+function minimax(board,depth,alpha,beta,maxing,ep,cr){const side=maxing?'w':'b';const lm=getLegal(board,side,ep,cr);if(depth===0)return evalBoard(board);if(!lm.length)return inChk(board,side)?(maxing?-99999:99999):0;if(maxing){let best=-Infinity;for(const m of lm){const res=applyMv(board,m.from,m.to,ep,cr);const ev=minimax(res.board,depth-1,alpha,beta,false,res.ep,res.cr);best=Math.max(best,ev);alpha=Math.max(alpha,ev);if(beta<=alpha)break};return best}else{let best=Infinity;for(const m of lm){const res=applyMv(board,m.from,m.to,ep,cr);const ev=minimax(res.board,depth-1,alpha,beta,true,res.ep,res.cr);best=Math.min(best,ev);beta=Math.min(beta,ev);if(beta<=alpha)break};return best}}
+function bestAIMove(board,ep,cr){const lm=getLegal(board,'b',ep,cr);if(!lm.length)return null;let best=null,bestEv=Infinity;for(const m of lm){const res=applyMv(board,m.from,m.to,ep,cr);const ev=minimax(res.board,2,-Infinity,Infinity,true,res.ep,res.cr);if(ev<bestEv){bestEv=ev;best=m}};return best}
+let CS={}
+function initChess(){CS={board:initBoard(),turn:'w',ep:null,cr:{w:{k:true,q:true},b:{k:true,q:true}},sel:null,legal:[],capW:[],capB:[],over:false,lastMv:null};renderChess();cStatus('Your turn (White)','');document.getElementById('c-dot').className='dot'}
+function renderChess(){const bel=document.getElementById('chess-board');bel.innerHTML='';const rEl=document.getElementById('c-ranks');rEl.innerHTML='';for(let r=0;r<8;r++){const s=document.createElement('span');s.textContent=8-r;rEl.appendChild(s)};const fEl=document.getElementById('c-files');fEl.innerHTML='';'abcdefgh'.split('').forEach(f=>{const s=document.createElement('span');s.textContent=f;fEl.appendChild(s)});for(let r=0;r<8;r++)for(let c=0;c<8;c++){const el=document.createElement('div');el.className='cell '+((r+c)%2===0?'L':'D');const p=CS.board[r][c];if(p&&p!=='promo'){el.textContent=SYM[p]||'?';el.style.color=cc(p)==='w'?'#e8d5a0':'#5ab8ff';el.style.textShadow=cc(p)==='w'?'0 0 10px rgba(232,213,160,.4)':'0 0 10px rgba(90,184,255,.4)'};if(CS.sel&&CS.sel[0]===r&&CS.sel[1]===c)el.classList.add('sel');const isLegal=CS.legal.find(m=>m.to[0]===r&&m.to[1]===c);if(isLegal){CS.board[r][c]?el.classList.add('lc'):el.classList.add('lm')};if(CS.lastMv){const[a,b,x,y]=CS.lastMv;if((r===a&&c===b)||(r===x&&c===y))el.classList.add('lmv')};if(!CS.over&&p===CS.turn+'K'&&inChk(CS.board,CS.turn))el.classList.add('chk');el.addEventListener('click',()=>clickCell(r,c));bel.appendChild(el)};document.getElementById('cap-w').textContent=CS.capW.map(p=>SYM[p]||'').join('');document.getElementById('cap-b').textContent=CS.capB.map(p=>SYM[p]||'').join('')}
+function clickCell(r,c){if(CS.over||CS.turn!=='w')return;if(CS.sel){const mv=CS.legal.find(m=>m.to[0]===r&&m.to[1]===c);if(mv){doMove(mv,false);return};if(CS.sel[0]===r&&CS.sel[1]===c){CS.sel=null;CS.legal=[];renderChess();return}};const p=CS.board[r][c];if(p&&cc(p)==='w'){CS.sel=[r,c];CS.legal=getLegal(CS.board,'w',CS.ep,CS.cr).filter(m=>m.from[0]===r&&m.from[1]===c)}else{CS.sel=null;CS.legal=[]};renderChess()}
+function doMove(mv,isAI){const res=applyMv(CS.board,mv.from,mv.to,CS.ep,CS.cr);if(res.captured){isAI?CS.capB.push(res.captured):CS.capW.push(res.captured)};CS.lastMv=[mv.from[0],mv.from[1],mv.to[0],mv.to[1]];CS.sel=null;CS.legal=[];if(res.needPromo&&!isAI){CS.board=res.board;CS.ep=res.ep;CS.cr=res.cr;CS.turn='b';showPromo(res.needPromo.r,res.needPromo.c,'w',()=>{renderChess();checkChessEnd();if(!CS.over)triggerAI()});return};if(res.needPromo&&isAI)res.board[res.needPromo.r][res.needPromo.c]='bQ';CS.board=res.board;CS.ep=res.ep;CS.cr=res.cr;CS.turn=CS.turn==='w'?'b':'w';renderChess();checkChessEnd();if(!CS.over&&!isAI&&CS.turn==='b')triggerAI();else if(!CS.over&&isAI)cStatus('Your turn (White)','')}
+function showPromo(r,c,side,cb){const modal=document.getElementById('promo-modal');const pp=document.getElementById('promo-pieces');pp.innerHTML='';modal.classList.add('show');for(const t of['Q','R','B','N']){const el=document.createElement('div');el.className='promo-piece';el.textContent=SYM[side+t];el.style.color=side==='w'?'#e8d5a0':'#5ab8ff';el.onclick=()=>{CS.board[r][c]=side+t;modal.classList.remove('show');cb()};pp.appendChild(el)}}
+function checkChessEnd(){const lm=getLegal(CS.board,CS.turn,CS.ep,CS.cr);if(!lm.length){CS.over=true;if(inChk(CS.board,CS.turn))cStatus(`CHECKMATE — ${CS.turn==='w'?'Black':'White'} WINS`,'');else cStatus('STALEMATE — DRAW','');document.getElementById('c-dot').className='dot ai'}else if(inChk(CS.board,CS.turn))cStatus(`CHECK! — ${CS.turn==='w'?'White':'Black'} in check`,'')}
+function triggerAI(){document.getElementById('c-think').style.display='inline';cStatus('AI calculating...','α-β depth-3');setTimeout(()=>{const m=bestAIMove(CS.board,CS.ep,CS.cr);document.getElementById('c-think').style.display='none';if(m)doMove(m,true);else{CS.over=true;cStatus('AI has no moves','');document.getElementById('c-dot').className='dot ai'}},80)}
+function cStatus(msg,info){document.getElementById('c-status').textContent=msg;document.getElementById('c-info').textContent=info}
+
+// ══ GO ══
+const GN=9,GP=24,GC=44;let GS={}
+function initGo(){GS={board:Array(GN).fill(null).map(()=>Array(GN).fill(0)),turn:1,caps:{1:0,2:0},prevStr:null,lastStr:null,passes:0,over:false,lastMove:null,hover:null};document.getElementById('go-result').style.display='none';document.getElementById('g-bc').textContent='0';document.getElementById('g-wc').textContent='0';document.getElementById('g-dot').className='dot';setupGoCanvas();drawGo();gStatus('Your turn (Black ●)','Black plays first · Komi 6.5')}
+function setupGoCanvas(){const cv=document.getElementById('go-canvas');cv.onclick=goClick;cv.onmousemove=goHover;cv.onmouseleave=()=>{GS.hover=null;drawGo()}}
+function gxy(r,c){return{x:GP+c*GC,y:GP+r*GC}}
+function drawGo(){const cv=document.getElementById('go-canvas'),ctx=cv.getContext('2d');ctx.clearRect(0,0,cv.width,cv.height);ctx.fillStyle='#050e05';ctx.fillRect(0,0,cv.width,cv.height);ctx.strokeStyle='#0d2a0d';ctx.lineWidth=1;ctx.strokeRect(GP-7,GP-7,(GN-1)*GC+14,(GN-1)*GC+14);ctx.strokeStyle='#194d19';ctx.lineWidth=.8;for(let i=0;i<GN;i++){ctx.beginPath();ctx.moveTo(GP,GP+i*GC);ctx.lineTo(GP+(GN-1)*GC,GP+i*GC);ctx.stroke();ctx.beginPath();ctx.moveTo(GP+i*GC,GP);ctx.lineTo(GP+i*GC,GP+(GN-1)*GC);ctx.stroke()};ctx.fillStyle='#1a5a1a';for(const[hr,hc]of[[2,2],[2,6],[6,2],[6,6],[4,4]]){const{x,y}=gxy(hr,hc);ctx.beginPath();ctx.arc(x,y,3,0,Math.PI*2);ctx.fill()};ctx.fillStyle='#1a5a1a';ctx.font='8px JetBrains Mono,monospace';ctx.textAlign='center';const cols='ABCDEFGHJ';for(let i=0;i<GN;i++){ctx.fillText(cols[i],GP+i*GC,GP-10);ctx.textAlign='right';ctx.fillText(GN-i,GP-11,GP+i*GC+3);ctx.textAlign='center'};if(GS.hover&&!GS.over&&GS.turn===1){const{r,c}=GS.hover;if(GS.board[r][c]===0){const{x,y}=gxy(r,c);ctx.beginPath();ctx.arc(x,y,GC*.42,0,Math.PI*2);ctx.fillStyle='rgba(0,0,0,.3)';ctx.fill();ctx.strokeStyle='rgba(0,212,255,.3)';ctx.lineWidth=1;ctx.stroke()}};for(let r=0;r<GN;r++)for(let c=0;c<GN;c++)if(GS.board[r][c])drawStone(ctx,r,c,GS.board[r][c]);if(GS.lastMove){const{x,y}=gxy(GS.lastMove[0],GS.lastMove[1]);ctx.beginPath();ctx.arc(x,y,3.5,0,Math.PI*2);ctx.fillStyle=GS.board[GS.lastMove[0]][GS.lastMove[1]]===1?'rgba(255,255,255,.7)':'rgba(0,0,0,.7)';ctx.fill()}}
+function drawStone(ctx,r,c,color){const{x,y}=gxy(r,c),rad=GC*.42;ctx.beginPath();ctx.arc(x,y,rad,0,Math.PI*2);if(color===1){const g=ctx.createRadialGradient(x-rad*.25,y-rad*.25,1,x,y,rad);g.addColorStop(0,'#666');g.addColorStop(1,'#0a0a0a');ctx.fillStyle=g;ctx.fill();ctx.strokeStyle='#333';ctx.lineWidth=.8;ctx.stroke()}else{const g=ctx.createRadialGradient(x-rad*.3,y-rad*.3,1,x,y,rad);g.addColorStop(0,'#fff');g.addColorStop(1,'#bbb');ctx.fillStyle=g;ctx.fill();ctx.strokeStyle='#888';ctx.lineWidth=.8;ctx.stroke()}}
+function goHover(e){if(GS.over||GS.turn!==1)return;const cv=document.getElementById('go-canvas'),rect=cv.getBoundingClientRect();const x=e.clientX-rect.left,y=e.clientY-rect.top;const c=Math.round((x-GP)/GC),r=Math.round((y-GP)/GC);GS.hover=(r>=0&&r<GN&&c>=0&&c<GN)?{r,c}:null;drawGo()}
+function goClick(e){if(GS.over||GS.turn!==1)return;const cv=document.getElementById('go-canvas'),rect=cv.getBoundingClientRect();const x=e.clientX-rect.left,y=e.clientY-rect.top;const c=Math.round((x-GP)/GC),r=Math.round((y-GP)/GC);if(r<0||r>=GN||c<0||c>=GN)return;if(goPlace(r,c,1)){GS.lastMove=[r,c];updateGoUI();drawGo();if(!GS.over){document.getElementById('g-think').style.display='inline';gStatus('AI calculating...','');setTimeout(()=>{document.getElementById('g-think').style.display='none';const m=goAI();if(m){goPlace(m.r,m.c,2);GS.lastMove=[m.r,m.c];GS.passes=0}else{GS.passes++;GS.turn=1;if(GS.passes>=2){endGo();return}};updateGoUI();drawGo()},300)}}}
+function goGroup(board,r,c){const col=board[r][c];if(!col)return{stones:[],libs:new Set()};const stones=[],libs=new Set(),vis=new Set(),stk=[[r,c]];while(stk.length){const[cr,cc]=stk.pop(),key=`${cr},${cc}`;if(vis.has(key))continue;vis.add(key);stones.push([cr,cc]);for(const[dr,dc]of[[-1,0],[1,0],[0,-1],[0,1]]){const nr=cr+dr,nc=cc+dc;if(nr<0||nr>=GN||nc<0||nc>=GN)continue;if(board[nr][nc]===0)libs.add(`${nr},${nc}`);else if(board[nr][nc]===col&&!vis.has(`${nr},${nc}`))stk.push([nr,nc])}};return{stones,libs}}
+function goPlace(r,c,player){if(GS.board[r][c]!==0||GS.over)return false;const nb=GS.board.map(row=>[...row]);nb[r][c]=player;const enemy=player===1?2:1;let cap=0;for(const[dr,dc]of[[-1,0],[1,0],[0,-1],[0,1]]){const nr=r+dr,nc=c+dc;if(nr<0||nr>=GN||nc<0||nc>=GN)continue;if(nb[nr][nc]===enemy){const{stones,libs}=goGroup(nb,nr,nc);if(!libs.size){for(const[sr,sc]of stones){nb[sr][sc]=0;cap++}}}};const{libs:oL}=goGroup(nb,r,c);if(!oL.size&&!cap)return false;const bStr=JSON.stringify(nb);if(bStr===GS.prevStr)return false;GS.prevStr=GS.lastStr;GS.lastStr=JSON.stringify(GS.board);GS.board=nb;GS.caps[player]+=cap;GS.passes=0;GS.turn=enemy;return true}
+function evalGoMove(r,c,player){const nb=GS.board.map(row=>[...row]);nb[r][c]=player;const enemy=player===1?2:1;let cap=0;for(const[dr,dc]of[[-1,0],[1,0],[0,-1],[0,1]]){const nr=r+dr,nc=c+dc;if(nr<0||nr>=GN||nc<0||nc>=GN)continue;if(nb[nr][nc]===enemy){const{stones,libs}=goGroup(nb,nr,nc);if(!libs.size){for(const[sr,sc]of stones){nb[sr][sc]=0;cap++}}}};const{libs}=goGroup(nb,r,c);if(!libs.size&&!cap)return null;if(JSON.stringify(nb)===GS.prevStr)return null;let sc=cap*12+libs.size*.8;const ctr=(GN-1)/2;sc+=Math.max(0,5-Math.abs(r-ctr)-Math.abs(c-ctr))*1.2;for(const[dr,dc]of[[-1,0],[1,0],[0,-1],[0,1]]){const nr=r+dr,nc=c+dc;if(nr>=0&&nr<GN&&nc>=0&&nc<GN){if(GS.board[nr][nc]===player)sc+=1.5;if(GS.board[nr][nc]===enemy){const{libs:el}=goGroup(GS.board,nr,nc);if(el.size<=2)sc+=4}}};const total=GS.board.flat().filter(x=>x).length;if(total<15&&(r===0||r===GN-1||c===0||c===GN-1))sc-=4;return sc+Math.random()*3}
+function goAI(){const moves=[];for(let r=0;r<GN;r++)for(let c=0;c<GN;c++){if(GS.board[r][c]===0){const sc=evalGoMove(r,c,2);if(sc!==null)moves.push({r,c,score:sc})}};if(!moves.length)return null;moves.sort((a,b)=>b.score-a.score);return moves[Math.floor(Math.random()*Math.min(3,moves.length))]}
+function goPass(){if(GS.over)return;GS.passes++;GS.lastMove=null;if(GS.passes>=2){endGo();return};GS.turn=GS.turn===1?2:1;updateGoUI();drawGo();if(GS.turn===2){document.getElementById('g-think').style.display='inline';setTimeout(()=>{document.getElementById('g-think').style.display='none';const m=goAI();if(m){goPlace(m.r,m.c,2);GS.lastMove=[m.r,m.c];GS.passes=0}else{GS.passes++;GS.turn=1;if(GS.passes>=2){endGo();return}};updateGoUI();drawGo()},300)}}
+function goResign(){if(GS.over)return;GS.over=true;gStatus('You resigned — WHITE wins','');document.getElementById('g-dot').className='dot ai';const res=document.getElementById('go-result');res.style.display='block';document.getElementById('g-scores').innerHTML='';document.getElementById('g-winner').textContent='WHITE WINS BY RESIGNATION'}
+function goTerritory(){const terr={1:0,2:0},vis=new Set();for(let r=0;r<GN;r++)for(let c=0;c<GN;c++){if(GS.board[r][c]===0&&!vis.has(`${r},${c}`)){const borders=new Set(),stk=[[r,c]],av=new Set();while(stk.length){const[cr,cc]=stk.pop(),key=`${cr},${cc}`;if(av.has(key))continue;av.add(key);vis.add(key);for(const[dr,dc]of[[-1,0],[1,0],[0,-1],[0,1]]){const nr=cr+dr,nc=cc+dc;if(nr<0||nr>=GN||nc<0||nc>=GN)continue;if(GS.board[nr][nc]===0&&!av.has(`${nr},${nc}`))stk.push([nr,nc]);else if(GS.board[nr][nc])borders.add(GS.board[nr][nc])}};if(borders.size===1)terr[[...borders][0]]+=av.size}};return terr}
+function endGo(){GS.over=true;const terr=goTerritory();let b=0,w=0;for(let r=0;r<GN;r++)for(let c=0;c<GN;c++){if(GS.board[r][c]===1)b++;else if(GS.board[r][c]===2)w++};const bSc=terr[1]+GS.caps[1]+b,wSc=terr[2]+GS.caps[2]+w+6.5,win=bSc>wSc?'BLACK':'WHITE';gStatus('GAME OVER — counting territory','');document.getElementById('g-dot').className='dot ai';const res=document.getElementById('go-result');res.style.display='block';document.getElementById('g-scores').innerHTML=`<div class="sc"><div class="sc-lbl">BLACK</div><div class="sc-val">${bSc.toFixed(1)}</div></div><div class="sc"><div class="sc-lbl">WHITE+KOMI</div><div class="sc-val">${wSc.toFixed(1)}</div></div>`;document.getElementById('g-winner').textContent=`${win} WINS BY ${Math.abs(bSc-wSc).toFixed(1)}`;drawGo()}
+function updateGoUI(){document.getElementById('g-bc').textContent=GS.caps[1];document.getElementById('g-wc').textContent=GS.caps[2];if(!GS.over)gStatus(GS.turn===1?'Your turn (Black ●)':'AI turn (White ○)',`Passes: ${GS.passes}`)}
+function gStatus(msg,info){document.getElementById('g-status').textContent=msg;document.getElementById('g-info').textContent=info}
+
+// ══ MINESWEEPER ══
+const DIFF={beg:{rows:9,cols:9,mines:10,cell:38},int:{rows:16,cols:16,mines:40,cell:30},exp:{rows:16,cols:30,mines:99,cell:24}}
+let MS={},msDiff='beg',msMode='reveal',msInterval=null
+function setDiff(d){msDiff=d;document.querySelectorAll('.diff-btns .btn').forEach(b=>b.classList.remove('active'));document.getElementById('d-'+d).classList.add('active');resetMS()}
+function setMsMode(m){msMode=m;document.getElementById('ms-reveal-btn').classList.toggle('active',m==='reveal');document.getElementById('ms-flag-btn').classList.toggle('active',m==='flag')}
+function resetMS(){clearInterval(msInterval);const cfg=DIFF[msDiff];MS={rows:cfg.rows,cols:cfg.cols,totalMines:cfg.mines,cellSize:cfg.cell,board:Array(cfg.rows).fill(null).map(()=>Array(cfg.cols).fill(null).map(()=>({mine:false,revealed:false,flagged:false,adj:0,exploded:false,wrongFlag:false}))),state:'waiting',firstClick:true,timer:0,minesLeft:cfg.mines};document.getElementById('ms-timer').textContent='000';document.getElementById('ms-mines').textContent=String(MS.minesLeft).padStart(3,'0');document.getElementById('ms-face').textContent='🙂';renderMS()}
+function placeMines(safeR,safeC){const safe=new Set();for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){const nr=safeR+dr,nc=safeC+dc;if(nr>=0&&nr<MS.rows&&nc>=0&&nc<MS.cols)safe.add(`${nr},${nc}`)};let placed=0;while(placed<MS.totalMines){const r=Math.floor(Math.random()*MS.rows),c=Math.floor(Math.random()*MS.cols);if(!MS.board[r][c].mine&&!safe.has(`${r},${c}`)){MS.board[r][c].mine=true;placed++}};for(let r=0;r<MS.rows;r++)for(let c=0;c<MS.cols;c++){if(!MS.board[r][c].mine){let cnt=0;for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){if(!dr&&!dc)continue;const nr=r+dr,nc=c+dc;if(nr>=0&&nr<MS.rows&&nc>=0&&nc<MS.cols&&MS.board[nr][nc].mine)cnt++};MS.board[r][c].adj=cnt}}}
+function revealCell(r,c){const cell=MS.board[r][c];if(cell.revealed||cell.flagged||MS.state==='won'||MS.state==='lost')return;if(MS.firstClick){MS.firstClick=false;MS.state='playing';placeMines(r,c);msInterval=setInterval(()=>{MS.timer=Math.min(999,MS.timer+1);document.getElementById('ms-timer').textContent=String(MS.timer).padStart(3,'0')},1000)};if(cell.mine){cell.revealed=true;cell.exploded=true;MS.state='lost';clearInterval(msInterval);for(let rr=0;rr<MS.rows;rr++)for(let cc=0;cc<MS.cols;cc++){const c2=MS.board[rr][cc];if(c2.mine)c2.revealed=true;if(c2.flagged&&!c2.mine)c2.wrongFlag=true};document.getElementById('ms-face').textContent='😵';renderMS();return};const stk=[[r,c]];while(stk.length){const[cr,cc]=stk.pop(),cur=MS.board[cr][cc];if(cur.revealed||cur.flagged)continue;cur.revealed=true;if(cur.adj===0)for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){if(!dr&&!dc)continue;const nr=cr+dr,nc=cc+dc;if(nr>=0&&nr<MS.rows&&nc>=0&&nc<MS.cols&&!MS.board[nr][nc].revealed)stk.push([nr,nc])}};let unrev=0;for(let rr=0;rr<MS.rows;rr++)for(let cc=0;cc<MS.cols;cc++)if(!MS.board[rr][cc].mine&&!MS.board[rr][cc].revealed)unrev++;if(unrev===0){MS.state='won';clearInterval(msInterval);for(let rr=0;rr<MS.rows;rr++)for(let cc=0;cc<MS.cols;cc++)if(MS.board[rr][cc].mine)MS.board[rr][cc].flagged=true;MS.minesLeft=0;document.getElementById('ms-mines').textContent='000';document.getElementById('ms-face').textContent='😎'};renderMS()}
+function toggleFlag(r,c){const cell=MS.board[r][c];if(cell.revealed||MS.state==='won'||MS.state==='lost'||MS.firstClick)return;cell.flagged=!cell.flagged;MS.minesLeft+=cell.flagged?-1:1;document.getElementById('ms-mines').textContent=String(MS.minesLeft).padStart(3,'0');renderMS()}
+function chordCell(r,c){const cell=MS.board[r][c];if(!cell.revealed||!cell.adj)return;let flags=0;for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){if(!dr&&!dc)continue;const nr=r+dr,nc=c+dc;if(nr>=0&&nr<MS.rows&&nc>=0&&nc<MS.cols&&MS.board[nr][nc].flagged)flags++};if(flags===cell.adj)for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){if(!dr&&!dc)continue;const nr=r+dr,nc=c+dc;if(nr>=0&&nr<MS.rows&&nc>=0&&nc<MS.cols&&!MS.board[nr][nc].flagged)revealCell(nr,nc)}}
+const NC=['','#00d4ff','#00ff88','#ff3366','#aa66ff','#ff8800','#00ffee','#ff66aa','#6a8aaa']
+function renderMS(){const grid=document.getElementById('ms-grid');grid.innerHTML='';const sz=MS.cellSize;grid.style.gridTemplateColumns=`repeat(${MS.cols},${sz}px)`;for(let r=0;r<MS.rows;r++)for(let c=0;c<MS.cols;c++){const cell=MS.board[r][c],el=document.createElement('div');el.className='ms-cell';el.style.cssText=`width:${sz}px;height:${sz}px;font-size:${sz*.5}px`;if(cell.revealed){el.classList.add('revealed');if(cell.mine){el.textContent='💣';if(cell.exploded)el.classList.add('exploded')}else if(cell.adj>0){el.textContent=cell.adj;el.style.color=NC[cell.adj]}}else if(cell.wrongFlag){el.classList.add('revealed');el.textContent='❌';el.style.fontSize=(sz*.46)+'px'}else if(cell.flagged){el.textContent='⚑';el.classList.add('flagged')};el.addEventListener('click',()=>{if(msMode==='flag')toggleFlag(r,c);else if(cell.revealed&&cell.adj>0)chordCell(r,c);else revealCell(r,c)});el.addEventListener('contextmenu',e=>{e.preventDefault();toggleFlag(r,c)});el.addEventListener('dblclick',()=>{if(cell.revealed)chordCell(r,c)});grid.appendChild(el)}}
+
+// ══ SNAKE ══
+const SN_G=25,SN_C=18,SN_W=SN_G*SN_C,SN_H=SN_G*SN_C
+const SN_SPD={slow:220,norm:140,fast:75}
+let SN={},snSpeed='norm',snInterval=null,snHi=0
+function snakeInit(){SN={body:[{x:12,y:12},{x:11,y:12},{x:10,y:12}],dir:{x:1,y:0},nextDir:{x:1,y:0},food:null,score:0,over:false,started:false,particles:[],rainbow:0};spawnFood();showOverlay('SNAKE PROTOCOL','PRESS START OR ANY KEY',true);document.getElementById('sn-score').textContent='0';document.getElementById('sn-len').textContent='3';document.getElementById('sn-lvl').textContent='1';drawSnake()}
+function snakeReset(){clearInterval(snInterval);snInterval=null;snakeInit()}
+function snakeStart(){if(SN.over){snakeReset();return}if(SN.started)return;SN.started=true;hideOverlay();snInterval=setInterval(snakeTick,SN_SPD[snSpeed])}
+function snakePause(){clearInterval(snInterval);snInterval=null}
+function setSnakeSpeed(s){snSpeed=s;document.querySelectorAll('.speed-btns .btn').forEach(b=>b.classList.remove('active'));document.getElementById('sp-'+s).classList.add('active');if(SN.started&&!SN.over){clearInterval(snInterval);snInterval=setInterval(snakeTick,SN_SPD[snSpeed])}}
+function snakeDir(dx,dy){if(!SN.started){snakeStart();return}if(SN.over)return;if(dx!==0&&SN.dir.x!==0)return;if(dy!==0&&SN.dir.y!==0)return;SN.nextDir={x:dx,y:dy}}
+function spawnFood(){const occ=new Set(SN.body.map(s=>`${s.x},${s.y}`));let fx,fy;do{fx=Math.floor(Math.random()*SN_G);fy=Math.floor(Math.random()*SN_G)}while(occ.has(`${fx},${fy}`));SN.food={x:fx,y:fy}}
+function snakeTick(){SN.dir={...SN.nextDir};const head={x:SN.body[0].x+SN.dir.x,y:SN.body[0].y+SN.dir.y};if(head.x<0||head.x>=SN_G||head.y<0||head.y>=SN_G){gameOver();return};if(SN.body.some(s=>s.x===head.x&&s.y===head.y)){gameOver();return};SN.body.unshift(head);if(head.x===SN.food.x&&head.y===SN.food.y){const pts=10+Math.floor(SN.body.length/5)*2;SN.score+=pts;SN.rainbow=(SN.rainbow+1)%360;for(let i=0;i<8;i++)SN.particles.push({x:head.x*SN_C+SN_C/2,y:head.y*SN_C+SN_C/2,vx:(Math.random()-.5)*4,vy:(Math.random()-.5)*4,life:20,hue:SN.rainbow});spawnFood();document.getElementById('sn-score').textContent=SN.score;document.getElementById('sn-len').textContent=SN.body.length;document.getElementById('sn-lvl').textContent=Math.floor(SN.body.length/5)+1}else{SN.body.pop()};SN.particles=SN.particles.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.life--;return p.life>0});if(SN.score>snHi){snHi=SN.score;document.getElementById('sn-hi').textContent=snHi};drawSnake()}
+function gameOver(){clearInterval(snInterval);snInterval=null;SN.over=true;SN.started=false;if(SN.score>snHi){snHi=SN.score;document.getElementById('sn-hi').textContent=snHi};showOverlay('GAME OVER',`SCORE: ${SN.score} · HI: ${snHi}`,false);drawSnake()}
+function showOverlay(title,sub,showBtn){const ov=document.getElementById('sn-overlay');document.getElementById('sn-overlay-title').textContent=title;document.getElementById('sn-overlay-sub').textContent=sub;ov.querySelector('button').style.display=showBtn?'block':'none';ov.style.display='flex'}
+function hideOverlay(){document.getElementById('sn-overlay').style.display='none'}
+function drawSnake(){const cv=document.getElementById('snake-canvas'),ctx=cv.getContext('2d');ctx.clearRect(0,0,SN_W,SN_H);ctx.fillStyle='#050912';ctx.fillRect(0,0,SN_W,SN_H);ctx.strokeStyle='rgba(0,212,255,0.04)';ctx.lineWidth=.5;for(let i=0;i<=SN_G;i++){ctx.beginPath();ctx.moveTo(i*SN_C,0);ctx.lineTo(i*SN_C,SN_H);ctx.stroke();ctx.beginPath();ctx.moveTo(0,i*SN_C);ctx.lineTo(SN_W,i*SN_C);ctx.stroke()};if(!SN.body)return;const len=SN.body.length;SN.body.forEach((seg,i)=>{const t=i/len,alpha=1-t*.6;if(i===0){ctx.shadowColor='#00d4ff';ctx.shadowBlur=12;ctx.fillStyle=`rgba(0,212,255,${alpha})`}else{ctx.shadowBlur=0;const g2=Math.round(212-t*100),b2=Math.round(255-t*155);ctx.fillStyle=`rgba(0,${g2},${b2},${alpha})`};const pad=i===0?1:2,rx=seg.x*SN_C+pad,ry=seg.y*SN_C+pad,rw=SN_C-pad*2,rh=SN_C-pad*2,radius=i===0?4:3;ctx.beginPath();ctx.roundRect(rx,ry,rw,rh,radius);ctx.fill()});ctx.shadowBlur=0;const h=SN.body[0],ex=h.x*SN_C,ey=h.y*SN_C;ctx.fillStyle='#040912';if(SN.dir.x===1){ctx.fillRect(ex+SN_C-5,ey+4,3,3);ctx.fillRect(ex+SN_C-5,ey+SN_C-7,3,3)}else if(SN.dir.x===-1){ctx.fillRect(ex+2,ey+4,3,3);ctx.fillRect(ex+2,ey+SN_C-7,3,3)}else if(SN.dir.y===-1){ctx.fillRect(ex+4,ey+2,3,3);ctx.fillRect(ex+SN_C-7,ey+2,3,3)}else{ctx.fillRect(ex+4,ey+SN_C-5,3,3);ctx.fillRect(ex+SN_C-7,ey+SN_C-5,3,3)};if(SN.food){const t2=Date.now()/400,pulse=Math.sin(t2)*.15+.85,fx=SN.food.x*SN_C+SN_C/2,fy=SN.food.y*SN_C+SN_C/2;ctx.shadowColor='#ff3366';ctx.shadowBlur=14*pulse;ctx.fillStyle=`rgba(255,51,102,${pulse})`;ctx.beginPath();ctx.arc(fx,fy,SN_C*.35*pulse,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.fillStyle='rgba(255,180,200,.9)';ctx.beginPath();ctx.arc(fx,fy,SN_C*.12,0,Math.PI*2);ctx.fill()};SN.particles.forEach(p=>{const a=p.life/20;ctx.fillStyle=`hsla(${p.hue},100%,70%,${a})`;ctx.fillRect(p.x-2,p.y-2,4,4)});ctx.shadowBlur=0;if(SN.started&&!SN.over)requestAnimationFrame(drawSnake)}
+document.addEventListener('keydown',e=>{const v=document.getElementById('snake-view');if(v.style.display==='none')return;if(!SN.started&&!SN.over){snakeStart()};switch(e.key){case'ArrowUp':case'w':case'W':e.preventDefault();snakeDir(0,-1);break;case'ArrowDown':case's':case'S':e.preventDefault();snakeDir(0,1);break;case'ArrowLeft':case'a':case'A':e.preventDefault();snakeDir(-1,0);break;case'ArrowRight':case'd':case'D':e.preventDefault();snakeDir(1,0);break;case'r':case'R':snakeReset();break}})
+
+// ══ TETRIS ══
+const TP={
+  I:{s:[[1,1,1,1]],c:'#00d4ff'},
+  O:{s:[[1,1],[1,1]],c:'#ffc857'},
+  T:{s:[[0,1,0],[1,1,1]],c:'#aa66ff'},
+  S:{s:[[0,1,1],[1,1,0]],c:'#00ff88'},
+  Z:{s:[[1,1,0],[0,1,1]],c:'#ff3366'},
+  J:{s:[[1,0,0],[1,1,1]],c:'#5ab8ff'},
+  L:{s:[[0,0,1],[1,1,1]],c:'#ff8800'}
+}
+const TK=Object.keys(TP)
+let TET={},tetIv=null,tetHiScore=0,tetBag=[]
+
+function fromBag(){if(!tetBag.length){tetBag=[...TK];for(let i=tetBag.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[tetBag[i],tetBag[j]]=[tetBag[j],tetBag[i]]}};const k=tetBag.pop();return{k,s:TP[k].s.map(r=>[...r]),c:TP[k].c}}
+
+function tetInit(){
+  clearInterval(tetIv);tetIv=null
+  TET={board:Array(20).fill(null).map(()=>Array(10).fill(null)),cur:null,cx:0,cy:0,next:fromBag(),hold:null,canHold:true,score:0,lines:0,level:1,over:false,started:false,clearing:[]}
+  TET.cur=tetSpawn()
+  tetDrawAll()
+  document.getElementById('tet-overlay').style.display='flex'
+  document.getElementById('tet-ov-title').textContent='TETRIS PROTOCOL'
+  document.getElementById('tet-ov-sub').textContent='PRESS START OR ANY KEY'
+  document.getElementById('tet-overlay').querySelector('button').style.display='block'
+  tetUpdateUI()
+}
+
+function tetPause(){clearInterval(tetIv);tetIv=null}
+
+function tetSpawn(){
+  const p=TET.next;TET.next=fromBag()
+  TET.cx=Math.floor((10-p.s[0].length)/2);TET.cy=0;TET.canHold=true
+  if(!tetOK(p.s,TET.cx,TET.cy)){TET.over=true;clearInterval(tetIv);tetIv=null;if(TET.score>tetHiScore)tetHiScore=TET.score;document.getElementById('tet-hi').textContent=tetHiScore;document.getElementById('tet-overlay').style.display='flex';document.getElementById('tet-ov-title').textContent='GAME OVER';document.getElementById('tet-ov-sub').textContent=`SCORE: ${TET.score}`;document.getElementById('tet-overlay').querySelector('button').style.display='none'}
+  return p
+}
+
+function tetOK(s,x,y){for(let r=0;r<s.length;r++)for(let c=0;c<s[r].length;c++){if(!s[r][c])continue;const nr=y+r,nc=x+c;if(nr<0||nr>=20||nc<0||nc>=10)return false;if(TET.board[nr]&&TET.board[nr][nc])return false};return true}
+
+function tetRot(s){const rows=s.length,cols=s[0].length,r=Array(cols).fill(null).map(()=>Array(rows).fill(0));for(let i=0;i<rows;i++)for(let j=0;j<cols;j++)r[j][rows-1-i]=s[i][j];return r}
+
+function tetStart(){if(TET.over){tetInit();return}if(TET.started)return;TET.started=true;document.getElementById('tet-overlay').style.display='none';tetIv=setInterval(tetTick,tetSpeed())}
+function tetSpeed(){return Math.max(50,800-(TET.level-1)*70)}
+
+function tetMove(dx){if(TET.over||!TET.started)return;if(tetOK(TET.cur.s,TET.cx+dx,TET.cy)){TET.cx+=dx;tetDrawAll()}}
+
+function tetRotate(){
+  if(TET.over||!TET.started)return
+  const rot=tetRot(TET.cur.s)
+  for(const off of[0,-1,1,-2,2]){if(tetOK(rot,TET.cx+off,TET.cy)){TET.cur.s=rot;TET.cx+=off;tetDrawAll();return}}
+}
+
+function tetSoftDrop(){if(TET.over||!TET.started)return;if(tetOK(TET.cur.s,TET.cx,TET.cy+1)){TET.cy++;TET.score++;tetUpdateUI();tetDrawAll()}else tetLock()}
+
+function tetHardDrop(){
+  if(TET.over||!TET.started)return
+  while(tetOK(TET.cur.s,TET.cx,TET.cy+1)){TET.cy++;TET.score+=2}
+  tetLock()
+}
+
+function tetHold(){
+  if(TET.over||!TET.started||!TET.canHold)return
+  TET.canHold=false
+  if(TET.hold){const tmp=TET.hold;TET.hold={k:TET.cur.k,s:TP[TET.cur.k].s.map(r=>[...r]),c:TET.cur.c};TET.cur=tmp;TET.cx=Math.floor((10-TET.cur.s[0].length)/2);TET.cy=0}
+  else{TET.hold={k:TET.cur.k,s:TP[TET.cur.k].s.map(r=>[...r]),c:TET.cur.c};TET.cur=tetSpawn()}
+  tetDrawAll()
+}
+
+function tetGhostY(){let gy=TET.cy;while(tetOK(TET.cur.s,TET.cx,gy+1))gy++;return gy}
+
+function tetLock(){
+  for(let r=0;r<TET.cur.s.length;r++)for(let c=0;c<TET.cur.s[r].length;c++){if(!TET.cur.s[r][c])continue;const nr=TET.cy+r,nc=TET.cx+c;if(nr>=0&&nr<20)TET.board[nr][nc]=TET.cur.c}
+  tetClear();TET.cur=tetSpawn();tetDrawAll()
+}
+
+function tetClear(){
+  let n=0;const full=[]
+  for(let r=19;r>=0;r--)if(TET.board[r].every(c=>c)){full.push(r);n++}
+  if(!n)return
+  // Flash then remove
+  full.forEach(r=>{TET.board[r]=TET.board[r].map(()=>'#ffffff')})
+  tetDrawAll()
+  setTimeout(()=>{
+    full.sort((a,b)=>b-a).forEach(r=>{TET.board.splice(r,1);TET.board.unshift(Array(10).fill(null))})
+    const pts=[0,100,300,500,800][n]*TET.level
+    TET.score+=pts;TET.lines+=n;TET.level=Math.floor(TET.lines/10)+1
+    clearInterval(tetIv);if(TET.started&&!TET.over)tetIv=setInterval(tetTick,tetSpeed())
+    tetUpdateUI();tetDrawAll()
+  },120)
+}
+
+function tetTick(){if(TET.over||!TET.started)return;if(tetOK(TET.cur.s,TET.cx,TET.cy+1)){TET.cy++;tetDrawAll()}else tetLock()}
+
+function tetUpdateUI(){
+  document.getElementById('tet-score').textContent=TET.score
+  document.getElementById('tet-lines').textContent=TET.lines
+  document.getElementById('tet-level').textContent=TET.level
+  document.getElementById('tet-hi').textContent=tetHiScore
+}
+
+const TC=28 // cell size
+function tetDrawAll(){tetDrawBoard();tetDrawMini('tet-next',TET.next);tetDrawMini('tet-hold',TET.hold)}
+
+function tetDrawBoard(){
+  const cv=document.getElementById('tet-canvas');if(!cv)return
+  const ctx=cv.getContext('2d')
+  ctx.fillStyle='#050912';ctx.fillRect(0,0,280,560)
+  // grid
+  ctx.strokeStyle='rgba(0,212,255,.05)';ctx.lineWidth=.5
+  for(let i=0;i<=20;i++){ctx.beginPath();ctx.moveTo(0,i*TC);ctx.lineTo(280,i*TC);ctx.stroke()}
+  for(let i=0;i<=10;i++){ctx.beginPath();ctx.moveTo(i*TC,0);ctx.lineTo(i*TC,560);ctx.stroke()}
+  // board
+  for(let r=0;r<20;r++)for(let c=0;c<10;c++)if(TET.board[r][c])tetCell(ctx,c,r,TET.board[r][c],1)
+  // ghost
+  if(TET.cur&&!TET.over){const gy=tetGhostY();for(let r=0;r<TET.cur.s.length;r++)for(let c=0;c<TET.cur.s[r].length;c++){if(!TET.cur.s[r][c])continue;tetCell(ctx,TET.cx+c,gy+r,TET.cur.c,.14)}}
+  // current
+  if(TET.cur&&!TET.over){for(let r=0;r<TET.cur.s.length;r++)for(let c=0;c<TET.cur.s[r].length;c++){if(!TET.cur.s[r][c])continue;tetCell(ctx,TET.cx+c,TET.cy+r,TET.cur.c,1)}}
+  // border
+  ctx.strokeStyle='var(--border)';ctx.lineWidth=1;ctx.strokeRect(0,0,280,560)
+}
+
+function tetCell(ctx,x,y,color,alpha){
+  ctx.globalAlpha=alpha
+  // Glow for active piece
+  if(alpha===1){ctx.shadowColor=color;ctx.shadowBlur=6}
+  ctx.fillStyle=color;ctx.fillRect(x*TC+1,y*TC+1,TC-2,TC-2)
+  // highlight
+  ctx.fillStyle='rgba(255,255,255,.18)';ctx.fillRect(x*TC+1,y*TC+1,TC-2,3)
+  ctx.fillStyle='rgba(255,255,255,.06)';ctx.fillRect(x*TC+1,y*TC+1,3,TC-2)
+  ctx.shadowBlur=0;ctx.globalAlpha=1
+}
+
+function tetDrawMini(id,piece){
+  const cv=document.getElementById(id);if(!cv)return
+  const ctx=cv.getContext('2d'),MC=18
+  ctx.fillStyle='#050912';ctx.fillRect(0,0,cv.width,cv.height)
+  if(!piece)return
+  const s=piece.s,rows=s.length,cols=s[0].length
+  const ox=Math.floor((cv.width/MC-cols)/2),oy=Math.floor((cv.height/MC-rows)/2)
+  for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
+    if(!s[r][c])continue
+    ctx.shadowColor=piece.c;ctx.shadowBlur=5
+    ctx.fillStyle=piece.c;ctx.fillRect((ox+c)*MC+1,(oy+r)*MC+1,MC-2,MC-2)
+    ctx.fillStyle='rgba(255,255,255,.2)';ctx.fillRect((ox+c)*MC+1,(oy+r)*MC+1,MC-2,3)
+    ctx.shadowBlur=0
+  }
+}
+
+document.addEventListener('keydown',e=>{
+  const v=document.getElementById('tet-view');if(v.style.display==='none')return
+  if(!TET.started&&!TET.over){tetStart();return}
+  switch(e.key){
+    case'ArrowLeft':e.preventDefault();tetMove(-1);break
+    case'ArrowRight':e.preventDefault();tetMove(1);break
+    case'ArrowDown':e.preventDefault();tetSoftDrop();break
+    case'ArrowUp':case'z':case'Z':e.preventDefault();tetRotate();break
+    case' ':e.preventDefault();tetHardDrop();break
+    case'c':case'C':e.preventDefault();tetHold();break
+    case'r':case'R':tetInit();break
+  }
+})
+
+// ══ REVERSI ══
+const RV_D=[[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]]
+const RV_W=[[100,-20,10,5,5,10,-20,100],[-20,-50,-2,-2,-2,-2,-50,-20],[10,-2,5,1,1,5,-2,10],[5,-2,1,1,1,1,-2,5],[5,-2,1,1,1,1,-2,5],[10,-2,5,1,1,5,-2,10],[-20,-50,-2,-2,-2,-2,-50,-20],[100,-20,10,5,5,10,-20,100]]
+let RV={}
+
+function rvInit(){
+  RV={board:Array(8).fill(null).map(()=>Array(8).fill(0)),turn:1,over:false,scores:{1:2,2:2}}
+  RV.board[3][3]=2;RV.board[3][4]=1;RV.board[4][3]=1;RV.board[4][4]=2
+  const cv=document.getElementById('rv-canvas')
+  cv.onclick=null
+  cv.addEventListener('click',e=>{const rect=cv.getBoundingClientRect(),CS=52,c=Math.floor((e.clientX-rect.left)/CS),r=Math.floor((e.clientY-rect.top)/CS);if(r>=0&&r<8&&c>=0&&c<8)rvClick(r,c)},{once:false})
+  document.getElementById('rv-dot').className='dot'
+  rvRender();rvStatus('Your turn (Black ●)')
+}
+
+function rvFlips(board,r,c,player){
+  if(board[r][c]!==0)return[]
+  const enemy=player===1?2:1,flips=[]
+  for(const[dr,dc]of RV_D){const line=[];let nr=r+dr,nc=c+dc;while(nr>=0&&nr<8&&nc>=0&&nc<8&&board[nr][nc]===enemy){line.push([nr,nc]);nr+=dr;nc+=dc};if(line.length&&nr>=0&&nr<8&&nc>=0&&nc<8&&board[nr][nc]===player)flips.push(...line)}
+  return flips
+}
+function rvLegal(board,player){const mv=[];for(let r=0;r<8;r++)for(let c=0;c<8;c++)if(!board[r][c]&&rvFlips(board,r,c,player).length)mv.push([r,c]);return mv}
+function rvApply(board,r,c,player){const nb=board.map(row=>[...row]),fl=rvFlips(nb,r,c,player);nb[r][c]=player;for(const[fr,fc]of fl)nb[fr][fc]=player;return nb}
+function rvEval(board){let s=0;for(let r=0;r<8;r++)for(let c=0;c<8;c++){if(board[r][c]===1)s-=RV_W[r][c];else if(board[r][c]===2)s+=RV_W[r][c]};return s}
+function rvMM(board,depth,alpha,beta,maxing){
+  const pl=maxing?2:1,mv=rvLegal(board,pl)
+  if(!depth||!mv.length)return rvEval(board)
+  if(maxing){let best=-Infinity;for(const[r,c]of mv){const ev=rvMM(rvApply(board,r,c,pl),depth-1,alpha,beta,false);best=Math.max(best,ev);alpha=Math.max(alpha,ev);if(beta<=alpha)break};return best}
+  else{let best=Infinity;for(const[r,c]of mv){const ev=rvMM(rvApply(board,r,c,pl),depth-1,alpha,beta,true);best=Math.min(best,ev);beta=Math.min(beta,ev);if(beta<=alpha)break};return best}
+}
+function rvBest(board){const mv=rvLegal(board,2);if(!mv.length)return null;let best=null,bv=-Infinity;for(const[r,c]of mv){const ev=rvMM(rvApply(board,r,c,2),4,-Infinity,Infinity,false);if(ev>bv){bv=ev;best=[r,c]}};return best}
+
+function rvClick(r,c){
+  if(RV.over||RV.turn!==1)return
+  const fl=rvFlips(RV.board,r,c,1)
+  if(!fl.length)return
+  RV.board=rvApply(RV.board,r,c,1)
+  rvAfterMove()
+}
+
+function rvAfterMove(){
+  rvCalcScores();rvRender()
+  const bm=rvLegal(RV.board,1),wm=rvLegal(RV.board,2)
+  if(!bm.length&&!wm.length){RV.over=true;const w=RV.scores[1]>RV.scores[2]?'BLACK WINS':RV.scores[2]>RV.scores[1]?'WHITE WINS':'DRAW';rvStatus('GAME OVER — '+w);document.getElementById('rv-dot').className='dot ai';return}
+  if(wm.length){
+    RV.turn=2;rvStatus('AI thinking...')
+    document.getElementById('rv-think').style.display='inline'
+    setTimeout(()=>{
+      document.getElementById('rv-think').style.display='none'
+      const m=rvBest(RV.board);if(m)RV.board=rvApply(RV.board,m[0],m[1],2)
+      rvCalcScores();rvRender()
+      const bm2=rvLegal(RV.board,1),wm2=rvLegal(RV.board,2)
+      if(!bm2.length&&!wm2.length){RV.over=true;const w=RV.scores[1]>RV.scores[2]?'BLACK WINS':RV.scores[2]>RV.scores[1]?'WHITE WINS':'DRAW';rvStatus('GAME OVER — '+w);document.getElementById('rv-dot').className='dot ai';return}
+      if(bm2.length){RV.turn=1;rvStatus('Your turn (Black ●)')}
+      else{rvStatus('Black has no moves — AI again');setTimeout(()=>rvAfterMove(),400)}
+    },350)
+  }else{RV.turn=1;rvStatus('White has no moves — Your turn again')}
+}
+
+function rvCalcScores(){RV.scores={1:0,2:0};for(let r=0;r<8;r++)for(let c=0;c<8;c++)if(RV.board[r][c])RV.scores[RV.board[r][c]]++}
+
+function rvRender(){
+  const cv=document.getElementById('rv-canvas'),ctx=cv.getContext('2d'),CS=52
+  ctx.fillStyle='#051205';ctx.fillRect(0,0,416,416)
+  ctx.strokeStyle='#194d19';ctx.lineWidth=1
+  for(let i=0;i<=8;i++){ctx.beginPath();ctx.moveTo(i*CS,0);ctx.lineTo(i*CS,416);ctx.stroke();ctx.beginPath();ctx.moveTo(0,i*CS);ctx.lineTo(416,i*CS);ctx.stroke()}
+  ctx.fillStyle='#194d19'
+  for(const[hr,hc]of[[2,2],[2,6],[6,2],[6,6],[4,4]]){ctx.beginPath();ctx.arc(hc*CS+CS/2,hr*CS+CS/2,3.5,0,Math.PI*2);ctx.fill()}
+  if(RV.turn===1&&!RV.over){for(const[r,c]of rvLegal(RV.board,1)){ctx.fillStyle='rgba(0,212,255,.16)';ctx.beginPath();ctx.arc(c*CS+CS/2,r*CS+CS/2,CS*.3,0,Math.PI*2);ctx.fill();ctx.strokeStyle='rgba(0,212,255,.4)';ctx.lineWidth=1;ctx.beginPath();ctx.arc(c*CS+CS/2,r*CS+CS/2,CS*.3,0,Math.PI*2);ctx.stroke()}}
+  for(let r=0;r<8;r++)for(let c=0;c<8;c++){
+    if(!RV.board[r][c])continue
+    const x=c*CS+CS/2,y=r*CS+CS/2,rad=CS*.42
+    if(RV.board[r][c]===1){const g=ctx.createRadialGradient(x-rad*.2,y-rad*.2,1,x,y,rad);g.addColorStop(0,'#555');g.addColorStop(1,'#0a0a0a');ctx.fillStyle=g;ctx.shadowColor='rgba(0,212,255,.25)';ctx.shadowBlur=5}
+    else{const g=ctx.createRadialGradient(x-rad*.3,y-rad*.3,1,x,y,rad);g.addColorStop(0,'#fff');g.addColorStop(1,'#ccc');ctx.fillStyle=g;ctx.shadowColor='rgba(255,255,255,.25)';ctx.shadowBlur=5}
+    ctx.beginPath();ctx.arc(x,y,rad,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0
+  }
+  document.getElementById('rv-black').textContent=RV.scores[1]
+  document.getElementById('rv-white').textContent=RV.scores[2]
+}
+function rvStatus(msg){document.getElementById('rv-status').textContent=msg}
+
+// ══ 2048 ══
+const G2C={0:{bg:'#0a1828',fg:'#0a1828'},2:{bg:'#0d2035',fg:'#4a7a9a'},4:{bg:'#0d2a45',fg:'#6aaac0'},8:{bg:'#005577',fg:'#00d4ff'},16:{bg:'#005f88',fg:'#00e8ff'},32:{bg:'#006699',fg:'#00ffee'},64:{bg:'#004d88',fg:'#5ab8ff'},128:{bg:'#2d006e',fg:'#aa66ff'},256:{bg:'#3d0088',fg:'#cc88ff'},512:{bg:'#4a0099',fg:'#ee99ff'},1024:{bg:'#5c1200',fg:'#ff8800'},2048:{bg:'#3a1a00',fg:'#ffc857'}}
+let G2={},g2hi=0
+
+function g2048Init(){
+  G2={board:Array(4).fill(null).map(()=>Array(4).fill(0)),score:0,over:false,won:false}
+  g2Spawn();g2Spawn();g2Render()
+  document.getElementById('g2048-status').textContent=''
+}
+
+function g2Spawn(){const emp=[];for(let r=0;r<4;r++)for(let c=0;c<4;c++)if(!G2.board[r][c])emp.push([r,c]);if(!emp.length)return;const[r,c]=emp[Math.floor(Math.random()*emp.length)];G2.board[r][c]=Math.random()<.9?2:4}
+
+function g2Slide(row){
+  let r=row.filter(x=>x),pts=0
+  for(let i=0;i<r.length-1;i++)if(r[i]===r[i+1]){r[i]*=2;pts+=r[i];r[i+1]=0}
+  r=r.filter(x=>x);while(r.length<4)r.push(0)
+  return{row:r,pts}
+}
+
+function g2048Move(dir){
+  if(G2.over)return
+  let moved=false,gained=0
+  const b=G2.board.map(r=>[...r])
+  if(dir==='left'){for(let r=0;r<4;r++){const{row,pts}=g2Slide(b[r]);if(row.join()!==b[r].join())moved=true;b[r]=row;gained+=pts}}
+  else if(dir==='right'){for(let r=0;r<4;r++){const rev=[...b[r]].reverse(),{row,pts}=g2Slide(rev);const fin=[...row].reverse();if(fin.join()!==b[r].join())moved=true;b[r]=fin;gained+=pts}}
+  else if(dir==='up'){for(let c=0;c<4;c++){const col=b.map(r=>r[c]),{row,pts}=g2Slide(col);if(row.join()!==col.join())moved=true;for(let r=0;r<4;r++)b[r][c]=row[r];gained+=pts}}
+  else if(dir==='down'){for(let c=0;c<4;c++){const col=b.map(r=>r[c]).reverse(),{row,pts}=g2Slide(col);const fin=[...row].reverse();if(fin.join()!==[...b.map(r=>r[c])].join())moved=true;for(let r=0;r<4;r++)b[r][c]=fin[r];gained+=pts}}
+  if(!moved)return
+  G2.board=b;G2.score+=gained
+  if(G2.score>g2hi){g2hi=G2.score;document.getElementById('g2048-hi').textContent=g2hi}
+  g2Spawn()
+  if(!G2.won&&b.flat().some(v=>v>=2048)){G2.won=true;document.getElementById('g2048-status').textContent='★ YOU REACHED 2048!'}
+  if(!g2HasMoves()){G2.over=true;document.getElementById('g2048-status').textContent='GAME OVER'}
+  g2Render()
+}
+
+function g2HasMoves(){for(let r=0;r<4;r++)for(let c=0;c<4;c++){if(!G2.board[r][c])return true;if(c<3&&G2.board[r][c]===G2.board[r][c+1])return true;if(r<3&&G2.board[r][c]===G2.board[r+1][c])return true};return false}
+
+function g2Render(){
+  const grid=document.getElementById('g2048-grid');grid.innerHTML=''
+  for(let r=0;r<4;r++)for(let c=0;c<4;c++){
+    const val=G2.board[r][c],el=document.createElement('div');el.className='g2048-cell'
+    const col=G2C[Math.min(val,2048)]||G2C[2048]
+    el.style.background=col.bg;el.style.color=col.fg
+    if(val>=8)el.style.boxShadow='0 0 14px '+col.fg+'55'
+    if(val){el.textContent=val;el.style.fontSize=val>=1024?'.8rem':val>=128?'1rem':'1.3rem'}
+    grid.appendChild(el)
+  }
+  document.getElementById('g2048-score').textContent=G2.score
+}
+
+document.addEventListener('keydown',e=>{
+  if(document.getElementById('g2048-view').style.display==='none')return
+  const map={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right'}
+  if(map[e.key]){e.preventDefault();g2048Move(map[e.key])}
+})
+
+
+// ════════════════════════════════════════════════════════════
+// CONFIGURATION — fill in your values
+// ════════════════════════════════════════════════════════════
+const firebaseConfig = {
+  apiKey:            "AIzaSyB8LhPWA9gFW2GBCOlKl2DHllQsDBz-ooY",
+  authDomain:        "strategy-games-b42ee.firebaseapp.com",
+  projectId:         "strategy-games-b42ee",
+  storageBucket:     "strategy-games-b42ee.firebasestorage.app",
+  messagingSenderId: "378940662151",
+  appId:             "1:378940662151:web:6de3fc92a892f4a1dc7322"
+}
+// Your deployed backend URL (or http://localhost:3001 for dev)
+const BACKEND_URL = 'https://mindful-comfort-production-d4bf.up.railway.app' // Railway backend
+
+// ════════════════════════════════════════════════════════════
+// FIREBASE INIT (Auth + Firestore)
+// ════════════════════════════════════════════════════════════
+let _auth = null, _db = null, _fbReady = false
+
+const _con={log:(...a)=>{try{console.log(...a)}catch(e){}},warn:(...a)=>{try{console.warn(...a)}catch(e){}},error:(...a)=>{try{console.error(...a)}catch(e){}}}
+function _initFirebase() {
+  if (typeof firebase === 'undefined') {
+    console.log('Firebase SDK not loaded — guest mode active.')
+    return
+  }
+  try {
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig)
+    _auth = firebase.auth()
+    _db   = firebase.firestore()
+    _fbReady = true
+    _auth.onAuthStateChanged(async user => {
+      if (user) {
+        authCloseModal()
+        authShowChip(user)
+        await loadPurchasesFromFirestore(user.uid)
+      } else {
+        authShowScreen()
+      }
+    })
+  } catch(e) {
+    _con.warn('Firebase config invalid — guest mode active.', e.message)
+  }
+}
+
+// ── Load purchases from Firestore ─────────────────────────────────────────
+async function loadPurchasesFromFirestore(uid) {
+  try {
+    // Call backend which reads Firestore with Admin SDK
+    const res  = await fetch(`${BACKEND_URL}/api/purchases/${uid}`)
+    const data = await res.json()
+    if (data.purchases) {
+      Object.keys(data.purchases).forEach(pack => {
+        const p = data.purchases[pack]
+        const active = p.active !== false &&
+          (p.subscriptionActive !== false || pack !== 'monthly')
+        if (active) localStorage.setItem('sc_' + pack, '1')
+        else        localStorage.removeItem('sc_' + pack)
+      })
+      scRefreshLocks()
+    }
+  } catch(e) {
+    // Backend not reachable — fall back to localStorage
+    _con.warn('Backend unreachable, using localStorage cache.', e.message)
+  }
+}
+
+// ── Auth UI ───────────────────────────────────────────────────────────────
+let _authMode = 'login'
+
+function authSetMode(m) {
+  _authMode = m
+  document.getElementById('tab-login').classList.toggle('active', m==='login')
+  document.getElementById('tab-signup').classList.toggle('active', m==='signup')
+  document.getElementById('auth-name-wrap').classList.toggle('show', m==='signup')
+  const lw = document.getElementById('auth-legal-wrap')
+  if (lw) lw.classList.toggle('show', m==='signup')
+  document.getElementById('auth-submit-btn').textContent = m==='login' ? 'SIGN IN' : 'CREATE ACCOUNT'
+  authClearErr()
+}
+function authShowErr(msg) {
+  const el = document.getElementById('auth-error')
+  el.textContent = '⚠ ' + msg; el.classList.add('show')
+}
+function authClearErr() { document.getElementById('auth-error').classList.remove('show') }
+
+async function authSubmit() {
+  if (!_fbReady) { authShowErr('Firebase not configured — use guest mode.'); return }
+  const email = document.getElementById('auth-email').value.trim()
+  const pass  = document.getElementById('auth-pass').value
+  if (!email || !pass) { authShowErr('Email and password required.'); return }
+  if (_authMode === 'signup') {
+    const chk = document.getElementById('auth-terms-check')
+    if (chk && !chk.checked) { authShowErr('Please accept the Terms & Conditions to continue.'); return }
+  }
+  if (pass.length < 8) { authShowErr('Password must be at least 8 characters.'); return }
+  const box = document.querySelector('.auth-box')
+  if (box) box.classList.add('auth-loading'); authClearErr()
+  try {
+    if (_authMode === 'login') {
+      await _auth.signInWithEmailAndPassword(email, pass)
+    } else {
+      const name = document.getElementById('auth-name').value.trim()
+      const cred = await _auth.createUserWithEmailAndPassword(email, pass)
+      if (name) await cred.user.updateProfile({ displayName: name })
+    }
+  } catch(e) {
+    const msgs = {
+      'auth/user-not-found':      'No account found with this email.',
+      'auth/wrong-password':      'Incorrect password.',
+      'auth/email-already-in-use':'Email already in use — sign in instead.',
+      'auth/invalid-email':       'Invalid email address.',
+      'auth/weak-password':       'Password is too weak.',
+      'auth/too-many-requests':   'Too many attempts. Try again later.',
+      'auth/invalid-credential':  'Invalid credentials.'
+    }
+    authShowErr(msgs[e.code] || e.message)
+    if (box) box.classList.remove('auth-loading')
+  }
+}
+
+async function authGoogle() {
+  if (!_fbReady) { authShowErr('Firebase not configured — use guest mode.'); return }
+  authClearErr()
+  try {
+    await _auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())
+  } catch(e) {
+    if (e.code !== 'auth/popup-closed-by-user') authShowErr(e.message)
+  }
+}
+
+function authGuest() { authCloseModal() }
+
+async function authSignOut() {
+  if (_auth) await _auth.signOut()
+  ;['strategy','arcade','premium','monthly'].forEach(p => localStorage.removeItem('sc_'+p))
+  scRefreshLocks()
+  authShowScreen()
+}
+
+function authHideScreen() {
+  const as = document.getElementById('auth-screen')
+  if (as) as.classList.remove('open')
+  scRefreshLocks()
+}
+function authOpenModal() {
+  const as = document.getElementById('auth-screen')
+  if (as) as.classList.add('open')
+}
+function authCloseModal() {
+  const as = document.getElementById('auth-screen')
+  if (as) as.classList.remove('open')
+}
+function authShowScreen() {
+  // Landing always visible — just update the sign-in button visibility
+  const signinBtn = document.getElementById('signin-btn')
+  const chipEl    = document.getElementById('user-chip-land')
+  if (signinBtn) signinBtn.style.display = 'inline-block'
+  if (chipEl)    chipEl.style.display = 'none'
+  authHideChip()
+}
+function authShowChip(user) {
+  const signinBtn = document.getElementById('signin-btn')
+  if (signinBtn) signinBtn.style.display = 'none'
+  const chip = document.getElementById('user-chip-land')
+  if (!chip) return
+  chip.style.display = 'flex'
+  const av = chip.querySelector('.user-avatar')
+  const nm = chip.querySelector('.user-name')
+  const dn = (user.displayName || user.email || 'User')
+  if (nm) nm.textContent = dn
+  if (av) {
+    if (user.photoURL) {
+      av.innerHTML = '<img src="'+user.photoURL+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">'
+    } else {
+      av.innerHTML = ''
+      av.textContent = (dn[0] || '?').toUpperCase()
+    }
+  }
+}
+function authHideChip() {
+  const uc = document.getElementById('user-chip-land'); if(uc) uc.style.display='none'
+  const sb = document.getElementById('signin-btn'); if(sb) sb.style.display='inline-block'
+}
+
+// ════════════════════════════════════════════════════════════
+// PAYMENT GATEWAY — Stripe + PayPal
+// ════════════════════════════════════════════════════════════
+// ⚠️  TEST MODE — swap for live keys before going to production
+const STRIPE_PK = 'pk_test_51TiD7QCozVpaxQspwq59nL8zF9VoUBuBa2UnG8VMswKpBsmeWln4GaSEoQ8MlMmKEUywL8LiIJJBYIn4uxV8q0kb00rlV7dzBW'
+const STRIPE_LINKS = {
+  strategy: 'https://buy.stripe.com/test_14A4gy3302Eo9rX0j9fw400',
+  arcade:   'https://buy.stripe.com/test_aFacN40US4Mw5bH0j9fw401',
+  premium:  'https://buy.stripe.com/test_4gM5kC0USbaU33z5Dtfw402',
+  monthly:  'https://buy.stripe.com/test_28EfZg7jg0wg0Vrfe3fw403'
+}
+const PP_PRICES = {
+  strategy: { amount:'3.99', desc:'Strategy Core — Strategy Pack' },
+  arcade:   { amount:'3.99', desc:'Strategy Core — Arcade Pack' },
+  premium:  { amount:'9.99', desc:'Strategy Core — All Access (Lifetime)' },
+  monthly:  { amount:'2.99', desc:'Strategy Core — Monthly Pro' }
+}
+const PACK_GAMES = {
+  strategy:['go','rv'], arcade:['tet','2048'],
+  premium:['go','rv','tet','2048'], monthly:['go','rv','tet','2048']
+}
+const FREE_GAMES = new Set(['chess','snake','ms'])
+
+function _currentUid() {
+  return (_auth && _auth.currentUser) ? _auth.currentUser.uid : null
+}
+
+function scUnlocked() {
+  const u = new Set(FREE_GAMES)
+  if (localStorage.getItem('sc_premium')==='1'||localStorage.getItem('sc_monthly')==='1') {
+    Object.values(PACK_GAMES).flat().forEach(g=>u.add(g)); return u
+  }
+  if (localStorage.getItem('sc_strategy')==='1') PACK_GAMES.strategy.forEach(g=>u.add(g))
+  if (localStorage.getItem('sc_arcade')==='1')   PACK_GAMES.arcade.forEach(g=>u.add(g))
+  return u
+}
+
+function scGrant(pack) {
+  localStorage.setItem('sc_'+pack, '1')
+  scRefreshLocks(); storeRefreshOwned()
+}
+
+function scRefreshLocks() {
+  const ul = scUnlocked()
+  document.querySelectorAll('.card').forEach(card => {
+    const onclick = card.getAttribute('onclick') || ''
+    const m = onclick.match(/scLaunch\('([^']+)'\)/)
+    if (!m) return
+    const game = m[1]
+    let lk = card.querySelector('.card-lock')
+    if (!lk) { lk=document.createElement('span'); lk.className='card-lock'; card.appendChild(lk) }
+    lk.style.display = ul.has(game) ? 'none' : 'block'
+    lk.textContent = '🔒'
+  })
+}
+
+function scLaunch(game) {
+  if (scUnlocked().has(game)) showGame(game)
+  else storeOpen()
+}
+
+// ── Store ──────────────────────────────────────────────────────────────────
+function storeOpen() {
+  document.getElementById('store-screen').style.display = 'block'
+  storeRefreshOwned(); scMountPayPal()
+}
+function storeClose() {
+  document.getElementById('store-screen').style.display = 'none'
+}
+function storeRefreshOwned() {
+  ;['strategy','arcade','premium','monthly'].forEach(pack => {
+    if (localStorage.getItem('sc_'+pack) !== '1') return
+    const div = document.getElementById('pay-'+pack)
+    if (div) div.innerHTML = '<div class="st-owned">✓ OWNED</div>'
+  })
+}
+
+// ── Stripe — opens Payment Link directly ──────────────────────────────────
+function stripeGo(pack) {
+  const url = STRIPE_LINKS[pack]
+  if (!url) { alert('Stripe link not configured for: ' + pack); return }
+  // Append uid as client_reference_id so webhook can identify the user
+  const uid = _currentUid()
+  const fullUrl = uid ? url + '?client_reference_id=' + uid : url
+  window.location.href = fullUrl
+}
+
+// ── PayPal Smart Buttons ───────────────────────────────────────────────────
+let _ppMounted = {}
+function scMountPayPal() {
+  if (typeof paypal === 'undefined') return
+  ;['strategy','arcade','premium','monthly'].forEach(pack => {
+    if (localStorage.getItem('sc_'+pack)==='1') return
+    const cid = 'paypal-'+pack
+    if (_ppMounted[cid]) return
+    const el = document.getElementById(cid)
+    if (!el) return
+    _ppMounted[cid] = true
+    const uid = _currentUid() || 'guest'
+    paypal.Buttons({
+      style:{ layout:'horizontal', color:'black', shape:'rect', label:'pay', height:34, tagline:false },
+      createOrder:(data,actions) => actions.order.create({
+        purchase_units:[{
+          amount:    { value: PP_PRICES[pack].amount, currency_code: 'EUR' },
+          description: PP_PRICES[pack].desc,
+          custom_id: `${uid}:${pack}`   // webhook reads this to grant access
+        }]
+      }),
+      onApprove: async (data, actions) => {
+        await actions.order.capture()
+        // Immediate local grant (webhook will confirm in Firestore async)
+        scGrant(pack)
+        // Refresh from Firestore after 2s to sync
+        if (uid !== 'guest') setTimeout(() => loadPurchasesFromFirestore(uid), 2000)
+        payToast(pack); storeClose()
+      },
+      onError: err => _con.error('PayPal error', err)
+    }).render('#'+cid)
+  })
+}
+
+// ── Success toast ──────────────────────────────────────────────────────────
+function payToast(pack) {
+  const names={strategy:'STRATEGY PACK',arcade:'ARCADE PACK',premium:'ALL ACCESS',monthly:'MONTHLY PRO'}
+  const t = document.getElementById('pay-toast')
+  t.textContent = '✓ '+(names[pack]||pack.toUpperCase())+' UNLOCKED!'
+  t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 4000)
+}
+
+// ── Init on DOMContentLoaded ───────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  _initFirebase()
+  scRefreshLocks()
+  // Landing always visible — sign-in button shown by default
+  // Handle return from Stripe checkout
+  const p = new URLSearchParams(window.location.search)
+  const g = p.get('sc_grant')
+  if (g && PACK_GAMES[g]) {
+    scGrant(g); payToast(g)
+    // Clean URL
+    history.replaceState({}, '', window.location.pathname)
+    // Refresh from Firestore to confirm
+    const uid = _currentUid()
+    if (uid) setTimeout(() => loadPurchasesFromFirestore(uid), 1500)
+  }
+})
+
+// ══ LEGAL MODALS ══
+function legalOpen(type) {
+  const id = type === 'tos' ? 'modal-tos' : 'modal-privacy'
+  const modal = document.getElementById(id)
+  if (modal) {
+    modal.classList.add('open')
+    // Trigger Termly embed render if SDK loaded
+    if (window.Termly && window.Termly.initialize) {
+      try { window.Termly.initialize() } catch(e) {}
+    }
+  }
+}
+function legalClose(type) {
+  const id = type === 'tos' ? 'modal-tos' : 'modal-privacy'
+  const modal = document.getElementById(id)
+  if (modal) modal.classList.remove('open')
+}
+// Close on backdrop click
+document.addEventListener('click', e => {
+  ['modal-tos','modal-privacy'].forEach(id => {
+    const modal = document.getElementById(id)
+    if (modal && e.target === modal) modal.classList.remove('open')
+  })
+})
+// Close on Escape key
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    ['modal-tos','modal-privacy'].forEach(id => {
+      document.getElementById(id)?.classList.remove('open')
+    })
+  }
+})
+
+</script>
+<!-- TETRIS -->
+<div id="tet-view" class="view">
+  <div class="hdr"><div class="hdr-title">🟦 TETRIS · CLASSIC</div><button class="btn btn-p" onclick="tetInit()">NEW</button><button class="btn" onclick="showLanding()">← BACK</button></div>
+  <div class="sbar" style="max-width:470px">
+    <div style="font-size:.6rem;color:var(--dim)">← → MOVE &nbsp;·&nbsp; ↑/Z ROTATE &nbsp;·&nbsp; ↓ SOFT DROP</div>
+    <div style="font-size:.6rem;color:var(--dim)">SPACE HARD DROP &nbsp;·&nbsp; C HOLD</div>
+  </div>
+  <div class="tet-layout">
+    <div class="tet-side">
+      <div class="tet-label">HOLD</div>
+      <canvas id="tet-hold" width="88" height="72" class="tet-mini"></canvas>
+      <div class="tet-stats">
+        <div class="tet-stat"><div class="tet-stat-lbl">HIGH</div><div class="tet-stat-val" id="tet-hi">0</div></div>
+      </div>
+    </div>
+    <div class="tet-board-wrap">
+      <canvas id="tet-canvas" width="280" height="560"></canvas>
+      <div class="tet-overlay" id="tet-overlay">
+        <div class="tet-overlay-title" id="tet-ov-title">TETRIS PROTOCOL</div>
+        <div class="tet-overlay-sub" id="tet-ov-sub">PRESS START OR ANY KEY</div>
+        <button class="btn btn-p" onclick="tetStart()" style="pointer-events:all;margin-top:6px">▶ START</button>
+      </div>
+    </div>
+    <div class="tet-side">
+      <div class="tet-label">NEXT</div>
+      <canvas id="tet-next" width="88" height="72" class="tet-mini"></canvas>
+      <div class="tet-stats">
+        <div class="tet-stat"><div class="tet-stat-lbl">SCORE</div><div class="tet-stat-val" id="tet-score">0</div></div>
+        <div class="tet-stat"><div class="tet-stat-lbl">LINES</div><div class="tet-stat-val" id="tet-lines">0</div></div>
+        <div class="tet-stat"><div class="tet-stat-lbl">LEVEL</div><div class="tet-stat-val" id="tet-level">1</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="tet-btns">
+    <button class="tet-btn" onclick="tetRotate()">↺ ROT</button>
+    <button class="tet-btn" onclick="tetMove(-1)">◀</button>
+    <button class="tet-btn" onclick="tetSoftDrop()">▼</button>
+    <button class="tet-btn" onclick="tetMove(1)">▶</button>
+    <button class="tet-btn" onclick="tetHardDrop()">⇩ DROP</button>
+    <button class="tet-btn" onclick="tetHold()">◈ HOLD</button>
+  </div>
+</div>
+
+
+<!-- REVERSI -->
+<div id="rv-view" class="view">
+  <div class="hdr"><div class="hdr-title">⚫ REVERSI · OTHELLO</div><span class="thinking" id="rv-think">AI CALC...</span><button class="btn btn-p" onclick="rvInit()">NEW</button><button class="btn" onclick="showLanding()">← BACK</button></div>
+  <div class="sbar" style="max-width:420px"><div><span class="dot" id="rv-dot"></span><span id="rv-status">Your turn (Black)</span></div><div style="font-size:.62rem;color:var(--dim)">Click a highlighted square</div></div>
+  <div class="rv-hud">
+    <div class="rv-sc"><div class="rv-sc-lbl">BLACK ●</div><div class="rv-sc-val" id="rv-black" style="color:#a0c0d0">2</div></div>
+    <div style="width:1px;background:var(--border);height:28px"></div>
+    <div class="rv-sc"><div class="rv-sc-lbl">WHITE ○</div><div class="rv-sc-val" id="rv-white" style="color:#e0e0e0">2</div></div>
+  </div>
+  <canvas id="rv-canvas" width="416" height="416"></canvas>
+</div>
+
+<!-- 2048 -->
+<div id="g2048-view" class="view">
+  <div class="hdr"><div class="hdr-title">🔢 2048</div><button class="btn btn-p" onclick="g2048Init()">NEW</button><button class="btn" onclick="showLanding()">← BACK</button></div>
+  <div class="sbar" style="max-width:332px"><div style="font-size:.62rem;color:var(--dim)">Arrow keys or D-pad · Merge to reach 2048</div></div>
+  <div style="display:flex;flex-direction:column;align-items:center;gap:10px">
+    <div class="g2048-hud">
+      <div class="g2048-stat"><div class="g2048-stat-lbl">SCORE</div><div class="g2048-stat-val" id="g2048-score">0</div></div>
+      <div style="width:1px;background:var(--border);height:28px"></div>
+      <div class="g2048-stat"><div class="g2048-stat-lbl">BEST</div><div class="g2048-stat-val hi" id="g2048-hi">0</div></div>
+    </div>
+    <div class="g2048-status" id="g2048-status"></div>
+    <div id="g2048-grid"></div>
+    <div class="g2048-dpad">
+      <div class="g2048-empty g2048-dbtn"></div><div class="g2048-dbtn" onclick="g2048Move('up')">▲</div><div class="g2048-empty g2048-dbtn"></div>
+      <div class="g2048-dbtn" onclick="g2048Move('left')">◀</div><div class="g2048-dbtn" onclick="g2048Move('down')">▼</div><div class="g2048-dbtn" onclick="g2048Move('right')">▶</div>
+      <div class="g2048-empty g2048-dbtn"></div><div class="g2048-empty g2048-dbtn"></div><div class="g2048-empty g2048-dbtn"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ AUTH SCREEN ══ -->
+<div id="auth-screen">
+  <div class="auth-box">
+    <div class="auth-corner tl"></div><div class="auth-corner tr"></div>
+    <div class="auth-corner bl"></div><div class="auth-corner br"></div>
+    <button onclick="authCloseModal()" style="position:absolute;top:10px;right:12px;background:transparent;border:none;color:var(--dim);font-size:1rem;cursor:pointer;line-height:1;padding:2px 6px" title="Close">✕</button>
+    <div class="auth-logo">
+      <span class="auth-logo-icon">⚔</span>
+      <div class="auth-logo-title">STRATEGY CORE</div>
+      <div class="auth-logo-sub">// SECURE ACCESS · v8.0 //</div>
+    </div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="authSetMode('login')" id="tab-login">SIGN IN</button>
+      <button class="auth-tab" onclick="authSetMode('signup')" id="tab-signup">SIGN UP</button>
+    </div>
+    <div class="auth-error" id="auth-error"></div>
+    <div class="auth-name-field" id="auth-name-wrap">
+      <div class="auth-field">
+        <label class="auth-field-lbl">FULL NAME</label>
+        <input class="auth-input" id="auth-name" type="text" placeholder="Dr. Jane Smith" autocomplete="name">
+      </div>
+    </div>
+    <div class="auth-field">
+      <label class="auth-field-lbl">EMAIL</label>
+      <input class="auth-input" id="auth-email" type="email" placeholder="user@hospital.org" autocomplete="email">
+    </div>
+    <div class="auth-field">
+      <label class="auth-field-lbl">PASSWORD</label>
+      <input class="auth-input" id="auth-pass" type="password" placeholder="••••••••" autocomplete="current-password"
+        onkeydown="if(event.key==='Enter')authSubmit()">
+    </div>
+    <div class="auth-legal" id="auth-legal-wrap">
+      <input type="checkbox" id="auth-terms-check">
+      <label for="auth-terms-check">
+        I agree to the
+        <a href="#" onclick="event.preventDefault();legalOpen('tos')">Terms &amp; Conditions</a>
+        and
+        <a href="#" onclick="event.preventDefault();legalOpen('privacy')">Privacy Policy</a>
+      </label>
+    </div>
+    <button class="auth-submit" id="auth-submit-btn" onclick="authSubmit()">SIGN IN</button>
+    <div class="auth-divider">OR</div>
+    <button class="auth-google" onclick="authGoogle()">
+      <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+      Continue with Google
+    </button>
+    <div class="auth-guest" onclick="authGuest()">⟶ Continue as guest</div>
+  </div>
+</div>
+
+<!-- ══ USER CHIP ══ -->
+<div class="user-chip" id="user-chip">
+  <div class="user-avatar" id="user-avatar">?</div>
+  <div>
+    <div class="user-name" id="user-name-el"></div>
+    <div class="user-logout" onclick="authSignOut()">SIGN OUT</div>
+  </div>
+</div>
+
+<!-- ══ STORE ══ -->
+<div id="store-screen">
+  <div class="store-hdr">
+    <div class="store-hdr-title">⚡ STRATEGY CORE · STORE</div>
+    <button class="btn" onclick="storeClose()">← BACK</button>
+  </div>
+  <div class="store-grid">
+    <!-- FREE -->
+    <div class="st-card">
+      <div class="st-icon">🆓</div><div class="st-name">FREE</div>
+      <div class="st-price">$0</div><div class="st-period">FOREVER</div>
+      <ul class="st-features"><li>Chess vs AI</li><li>Snake Arcade</li><li>Minesweeper</li></ul>
+      <div class="st-owned">ACTIVE</div>
+    </div>
+    <!-- STRATEGY PACK -->
+    <div class="st-card" id="sc-strategy">
+      <div class="st-icon">🎯</div><div class="st-name">STRATEGY PACK</div>
+      <div class="st-price">$3.99</div><div class="st-period">ONE-TIME</div>
+      <ul class="st-features"><li>Go 9×9 vs AI</li><li>Reversi · Othello</li><li>Ko rules · depth 4</li></ul>
+      <div class="st-pay" id="pay-strategy">
+        <div class="pp-wrap" id="paypal-strategy"></div>
+        <button class="st-stripe" onclick="stripeGo('strategy')">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="#635bff"><path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.545-2.354 1.545-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813 1.664-1.305 2.525-3.236 2.525-5.732 0-4.128-2.524-5.851-6.591-7.305z"/></svg>
+          Pay with Stripe
+        </button>
+      </div>
+    </div>
+    <!-- ARCADE PACK -->
+    <div class="st-card" id="sc-arcade">
+      <div class="st-icon">🕹</div><div class="st-name">ARCADE PACK</div>
+      <div class="st-price">$3.99</div><div class="st-period">ONE-TIME</div>
+      <ul class="st-features"><li>Tetris · Ghost · Hold</li><li>2048 · Cyberpunk tiles</li></ul>
+      <div class="st-pay" id="pay-arcade">
+        <div class="pp-wrap" id="paypal-arcade"></div>
+        <button class="st-stripe" onclick="stripeGo('arcade')">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="#635bff"><path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.545-2.354 1.545-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813 1.664-1.305 2.525-3.236 2.525-5.732 0-4.128-2.524-5.851-6.591-7.305z"/></svg>
+          Pay with Stripe
+        </button>
+      </div>
+    </div>
+    <!-- ALL ACCESS -->
+    <div class="st-card feat" id="sc-premium">
+      <div class="st-icon">⭐</div><div class="st-name">ALL ACCESS</div>
+      <div class="st-price">$9.99</div><div class="st-period">LIFETIME · 7 GAMES</div>
+      <ul class="st-features"><li>All 7 games</li><li>All future games</li><li>No subscription</li></ul>
+      <div class="st-pay" id="pay-premium">
+        <div class="pp-wrap" id="paypal-premium"></div>
+        <button class="st-stripe" onclick="stripeGo('premium')">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="#635bff"><path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.545-2.354 1.545-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813 1.664-1.305 2.525-3.236 2.525-5.732 0-4.128-2.524-5.851-6.591-7.305z"/></svg>
+          Pay with Stripe
+        </button>
+      </div>
+    </div>
+    <!-- MONTHLY -->
+    <div class="st-card" id="sc-monthly">
+      <div class="st-icon">🔄</div><div class="st-name">MONTHLY PRO</div>
+      <div class="st-price">$2.99</div><div class="st-period">PER MONTH</div>
+      <ul class="st-features"><li>All 7 games</li><li>New releases</li><li>Cancel anytime</li></ul>
+      <div class="st-pay" id="pay-monthly">
+        <div class="pp-wrap" id="paypal-monthly"></div>
+        <button class="st-stripe" onclick="stripeGo('monthly')">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="#635bff"><path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.545-2.354 1.545-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813 1.664-1.305 2.525-3.236 2.525-5.732 0-4.128-2.524-5.851-6.591-7.305z"/></svg>
+          Pay with Stripe
+        </button>
+      </div>
+    </div>
+  </div>
+  <div style="font-size:.52rem;color:var(--dim);text-align:center;max-width:900px;margin:0 auto;letter-spacing:.08em">
+    Payments processed securely by PayPal &amp; Stripe · Monthly plans cancellable anytime
+  </div>
+</div>
+<div id="pay-toast"></div>
+
+
+<!-- ══ TERMS & CONDITIONS MODAL ══ -->
+<div class="legal-modal" id="modal-tos">
+  <div class="legal-box">
+    <div class="legal-hdr">
+      <div class="legal-hdr-title">// TERMS &amp; CONDITIONS</div>
+      <button class="legal-close" onclick="legalClose('tos')">✕</button>
+    </div>
+    <div class="legal-body" style="color:var(--text);font-size:.78rem;line-height:1.85">
+      <h2 style="color:var(--cyan);font-family:'Orbitron',sans-serif;font-size:1rem;margin-bottom:6px">TERMS AND CONDITIONS</h2>
+      <p style="color:var(--dim);font-size:.68rem;margin-bottom:20px">Last updated: July 16, 2026</p>
+
+      <p style="margin-bottom:16px">These Terms and Conditions ("Terms") govern your access to and use of Strategy Core (the "Service"), operated by Massimo Barbetta, doing business as Strategy Core ("we," "us," or "our"), available at <a href="https://aistrategygames.netlify.app" style="color:var(--cyan)">https://aistrategygames.netlify.app</a> and any associated mobile application. By creating an account or using the Service, you agree to be bound by these Terms. If you do not agree, do not use the Service.</p>
+
+      <h3 style="color:var(--cyan);font-size:.86rem;margin:20px 0 8px">1. Eligibility</h3>
+      <p style="margin-bottom:16px">You must be at least 18 years old, or the age of legal majority in your jurisdiction, to create an account or make a purchase. By using the Service, you represent that you meet this requirement, or that you are the parent or legal guardian of a minor using the Service under your supervision and consent.</p>
+
+      <h3 style="color:var(--cyan);font-size:.86rem;margin:20px 0 8px">2. Description of Service</h3>
+      <p style="margin-bottom:16px">Strategy Core is a freemium game suite offering classic strategy and arcade games — including Chess, Go, Reversi, Tetris, 2048, Snake, and Minesweeper — playable against AI engines. A subset of games is available free of charge. Additional games and features may be unlocked through one-time purchases or a recurring monthly subscription, as described within the Service's Store.</p>
+
+      <h3 style="color:var(--cyan);font-size:.86rem;margin:20px 0 8px">3. Accounts</h3>
+      <p style="margin-bottom:16px">To access purchased content, you must create an account using email/password authentication or Google Sign-In. You are responsible for maintaining the confidentiality of your account credentials and for all activity under your account. You agree to provide accurate information and to notify us promptly of any unauthorized use of your account.</p>
+
+      <h3 style="color:var(--cyan);font-size:.86rem;margin:20px 0 8px">4. Purchases, Subscriptions, and Payment</h3>
+      <p style="margin-bottom:8px"><strong style="color:var(--text)">4.1 One-time purchases.</strong> Certain game packs (e.g., Strategy Pack, Arcade Pack, All Access) may be purchased for a one-time fee, granting permanent access to the corresponding content tied to your account.</p>
+      <p style="margin-bottom:8px"><strong style="color:var(--text)">4.2 Subscriptions.</strong> The Monthly Pro plan is a recurring subscription billed on a monthly basis until cancelled. You may cancel at any time; access continues until the end of the current billing period. We do not provide prorated refunds for partial billing periods.</p>
+      <p style="margin-bottom:8px"><strong style="color:var(--text)">4.3 Payment processing.</strong> All payments are processed by third-party payment providers, Stripe and PayPal. We do not store your payment card details. Your use of these payment methods is also subject to Stripe's and PayPal's own terms of service and privacy policies.</p>
+      <p style="margin-bottom:16px"><strong style="color:var(--text)">4.4 Refunds.</strong> All purchases are final and non-refundable, except where required by applicable law. If you believe a payment was made in error, contact us at the email below.</p>
+
+      <h3 style="color:var(--cyan);font-size:.86rem;margin:20px 0 8px">5. Acceptable Use</h3>
+      <p style="margin-bottom:8px">You agree not to:</p>
+      <ul style="margin:0 0 16px 20px;list-style:disc">
+        <li style="margin-bottom:4px">Use the Service for any unlawful purpose or in violation of these Terms;</li>
+        <li style="margin-bottom:4px">Attempt to gain unauthorized access to the Service, other accounts, or the systems it runs on;</li>
+        <li style="margin-bottom:4px">Reverse-engineer, decompile, or extract the source code of the Service except as permitted by law;</li>
+        <li style="margin-bottom:4px">Use automated means (bots, scripts) to interact with the Service in a way that disrupts its normal operation;</li>
+        <li>Circumvent, disable, or otherwise interfere with the Service's paywall or purchase-verification mechanisms.</li>
+      </ul>
+
+      <h3 style="color:var(--cyan);font-size:.86rem;margin:20px 0 8px">6. Intellectual Property</h3>
+      <p style="margin-bottom:16px">The Service, including its design, code, graphics, game logic, and branding, is owned by us or our licensors and is protected by copyright and other intellectual property laws. We grant you a limited, non-exclusive, non-transferable, revocable license to access and use the Service for your personal, non-commercial use, subject to these Terms. This license does not grant you any right to reproduce, distribute, or create derivative works from the Service.</p>
+
+      <h3 style="color:var(--cyan);font-size:.86rem;margin:20px 0 8px">7. Third-Party Services</h3>
+      <p style="margin-bottom:16px">The Service relies on third-party providers, including Firebase (Google), Stripe, PayPal, Netlify, and Railway, to operate authentication, payments, hosting, and data storage. We are not responsible for outages, errors, or policies of these third parties, though we select them with reasonable care.</p>
+
+      <h3 style="color:var(--cyan);font-size:.86rem;margin:20px 0 8px">8. Termination</h3>
+      <p style="margin-bottom:16px">We may suspend or terminate your access to the Service at our discretion, with or without notice, if we believe you have violated these Terms. You may stop using the Service and request account deletion at any time by contacting us. Termination does not entitle you to a refund of prior purchases, except as required by law.</p>
+
+      <h3 style="color:var(--cyan);font-size:.86rem;margin:20px 0 8px">9. Disclaimer of Warranties</h3>
+      <p style="margin-bottom:16px">The Service is provided "as is" and "as available," without warranties of any kind, whether express or implied, including but not limited to warranties of merchantability, fitness for a particular purpose, or non-infringement. We do not warrant that the Service will be uninterrupted, secure, or error-free.</p>
+
+      <h3 style="color:var(--cyan);font-size:.86rem;margin:20px 0 8px">10. Limitation of Liability</h3>
+      <p style="margin-bottom:16px">To the maximum extent permitted by applicable law, we shall not be liable for any indirect, incidental, special, consequential, or punitive damages, or any loss of profits or data, arising out of or related to your use of the Service. Our total liability for any claim arising from these Terms or the Service shall not exceed the amount you paid us, if any, in the twelve (12) months preceding the claim.</p>
+
+      <h3 style="color:var(--cyan);font-size:.86rem;margin:20px 0 8px">11. Changes to the Service and These Terms</h3>
+      <p style="margin-bottom:16px">We may modify, suspend, or discontinue any part of the Service at any time. We may also update these Terms from time to time; material changes will be indicated by an updated "Last updated" date above. Continued use of the Service after changes take effect constitutes your acceptance of the revised Terms.</p>
+
+      <h3 style="color:var(--cyan);font-size:.86rem;margin:20px 0 8px">12. Governing Law</h3>
+      <p style="margin-bottom:16px">These Terms are governed by the laws of Spain, without regard to its conflict-of-law principles. Any disputes arising from these Terms or the Service shall be subject to the exclusive jurisdiction of the courts of Spain, unless applicable consumer-protection law grants you the right to bring a claim in your own jurisdiction.</p>
+
+      <h3 style="color:var(--cyan);font-size:.86rem;margin:20px 0 8px">13. Contact</h3>
+      <p style="margin-bottom:8px">For questions about these Terms, contact us at:</p>
+      <p style="margin-bottom:4px">Massimo Barbetta</p>
+      <p style="margin-bottom:4px">Calle Arcadio Balaguer 78, 2º-2ª</p>
+      <p style="margin-bottom:4px">Castelldefels, 08860, Spain</p>
+      <p style="margin-bottom:16px">Email: <a href="mailto:maxbarbetta100@gmail.com" style="color:var(--cyan)">maxbarbetta100@gmail.com</a></p>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PRIVACY POLICY MODAL ══ -->
+<div class="legal-modal" id="modal-privacy">
+  <div class="legal-box">
+    <div class="legal-hdr">
+      <div class="legal-hdr-title">// PRIVACY POLICY</div>
+      <button class="legal-close" onclick="legalClose('privacy')">✕</button>
+    </div>
+    <div class="legal-body" style="color:var(--text);font-size:.78rem;line-height:1.85">
+      <h2 style="color:var(--cyan);font-family:'Orbitron',sans-serif;font-size:1rem;margin-bottom:6px">PRIVACY POLICY</h2>
+      <p style="color:var(--dim);font-size:.68rem;margin-bottom:20px">Last updated: July 15, 2026</p>
+
+      <p style="margin-bottom:16px">This Privacy Notice for Massimo Barbetta (doing business as Strategy Core) ("we," "us," or "our"), describes how and why we might access, collect, store, use, and/or share ("process") your personal information when you use our services ("Services"), including when you visit our website at <a href="https://aistrategygames.netlify.app" style="color:var(--cyan)">aistrategygames.netlify.app</a>, download and use our mobile application, or use Strategy Core — a freemium web and mobile game suite featuring classic strategy and arcade games (Chess, Go, Reversi, Tetris, 2048, Snake, and Minesweeper) played against AI engines, where additional games can be unlocked through one-time purchases or a monthly subscription.</p>
+
+      <p style="margin-bottom:16px">Reading this Privacy Notice will help you understand your privacy rights and choices. If you do not agree with our policies and practices, please do not use our Services. If you have questions, contact us at <a href="mailto:maxbarbetta100@gmail.com" style="color:var(--cyan)">maxbarbetta100@gmail.com</a>.</p>
+
+      <h3 style="color:var(--cyan);font-size:.86rem;margin:20px 0 8px">1. What Information Do We Collect?</h3>
+      <p style="margin-bottom:8px"><strong style="color:var(--text)">Personal information you disclose to us.</strong> We collect personal information you voluntarily provide when you register on the Services, including: names, email addresses, passwords, and contact or authentication data. We do not process sensitive information.</p>
+      <p style="margin-bottom:8px"><strong style="color:var(--text)">Payment data.</strong> We collect data necessary to process payments if you make purchases. All payment data is handled and stored by Stripe and PayPal. Their privacy notices are available at <a href="https://stripe.com/privacy" target="_blank" style="color:var(--cyan)">stripe.com/privacy</a> and <a href="https://www.paypal.com/us/legalhub/privacy-full" target="_blank" style="color:var(--cyan)">paypal.com/legalhub/privacy-full</a>.</p>
+      <p style="margin-bottom:8px"><strong style="color:var(--text)">Social media login data.</strong> If you register using Google Sign-In, we receive certain profile information from Google, such as your name, email address, and profile picture.</p>
+      <p style="margin-bottom:8px"><strong style="color:var(--text)">Application data.</strong> If you use our mobile application, we may automatically collect device information (device ID, model, manufacturer), operating system version, browser type, IP address, and information about how you use the app's features. This is used to maintain security, troubleshoot issues, and for internal analytics.</p>
+      <p style="margin-bottom:16px"><strong style="color:var(--text)">Information automatically collected.</strong> We automatically collect certain information such as your IP address, browser and device characteristics, operating system, referring URLs, and usage information through cookies and similar technologies, primarily to maintain security and for internal analytics. Our use of information received via Google APIs adheres to the <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" style="color:var(--cyan)">Google API Services User Data Policy</a>, including Limited Use requirements.</p>
+
+      <h3 style="color:var(--cyan);font-size:.86rem;margin:20px 0 8px">2. How Do We Process Your Information?</h3>
+      <p style="margin-bottom:8px">We process your personal information to:</p>
+      <ul style="margin:0 0 16px 20px;list-style:disc">
+        <li style="margin-bottom:4px">Facilitate account creation, authentication, and account management;</li>
+        <li style="margin-bottom:4px">Deliver and facilitate the delivery of the Services;</li>
+        <li style="margin-bottom:4px">Respond to inquiries and offer support;</li>
+        <li style="margin-bottom:4px">Send administrative information about products, services, and policy changes;</li>
+        <li style="margin-bottom:4px">Fulfil and manage your orders, payments, and subscriptions;</li>
+        <li style="margin-bottom:4px">Protect our Services, including fraud monitoring and prevention;</li>
+        <li style="margin-bottom:4px">Identify usage trends to improve the Services; and</li>
+        <li>Protect vital interests where necessary (e.g., to prevent harm).</li>
+      </ul>
+
+      <h3 style="color:var(--cyan);font-size:.86rem;margin:20px 0 8px">3. What Legal Bases Do We Rely On?</h3>
+      <p style="margin-bottom:16px">Where the GDPR or UK GDPR applies, we rely on: <strong style="color:var(--text)">Consent</strong> (withdrawable at any time), <strong style="color:var(--text)">Performance of a Contract</strong> (to provide the Services you request), <strong style="color:var(--text)">Legitimate Interests</strong> (e.g., analyzing usage to improve the Services, preventing fraud), <strong style="color:var(--text)">Legal Obligations</strong>, and <strong style="color:var(--text)">Vital Interests</strong>. If you are located in Canada, we rely on express or implied consent, subject to certain legal exceptions (e.g., fraud detection, legal compliance).</p>
+
+      <h3 style="color:var(--cyan);font-size:.86rem;margin:20px 0 8px">4. When and With Whom Do We Share Your Information?</h3>
+      <p style="margin-bottom:8px">We share information with the following categories of service providers, each bound by contract to safeguard your data:</p>
+      <ul style="margin:0 0 16px 20px;list-style:disc">
+        <li style="margin-bottom:4px"><strong style="color:var(--text)">Cloud Computing:</strong> Google Cloud Platform</li>
+        <li style="margin-bottom:4px"><strong style="color:var(--text)">Functionality & Infrastructure:</strong> Cloud Firestore, Firebase</li>
+        <li style="margin-bottom:4px"><strong style="color:var(--text)">Invoicing & Billing:</strong> Stripe, PayPal</li>
+        <li style="margin-bottom:4px"><strong style="color:var(--text)">Authentication:</strong> Google Sign-In</li>
+        <li style="margin-bottom:4px"><strong style="color:var(--text)">Website Hosting:</strong> Netlify</li>
+        <li><strong style="color:var(--text)">Backend Hosting:</strong> Railway</li>
+      </ul>
+      <p style="margin-bottom:16px">We may also share information during business transfers such as a merger, acquisition, or sale of assets.</p>
+
+      <h3 style="color:var(--cyan);font-size:.86rem;margin:20px 0 8px">5. Cookies and Tracking Technologies</h3>
+      <p style="margin-bottom:16px">We use cookies and similar technologies to maintain security, prevent crashes, save preferences, and support basic site functions. Most browsers accept cookies by default; you can configure your browser to remove or reject them, though this may affect certain features.</p>
+
+      <h3 style="color:var(--cyan);font-size:.86rem;margin:20px 0 8px">6. Social Logins</h3>
+      <p style="margin-bottom:16px">If you register using Google Sign-In, we receive profile information from Google as described above. We are not responsible for how Google handles your data on its own platforms — please review Google's privacy policy directly.</p>
+
+      <h3 style="color:var(--cyan);font-size:.86rem;margin:20px 0 8px">7. International Data Transfers</h3>
+      <p style="margin-bottom:16px">Our servers, and those of our service providers, are located in the United States. If you are located in the EEA, UK, or Switzerland, your information may be transferred outside these regions. We rely on the European Commission's Standard Contractual Clauses and equivalent safeguards to protect such transfers.</p>
+
+      <h3 style="color:var(--cyan);font-size:.86rem;margin:20px 0 8px">8. How Long Do We Keep Your Information?</h3>
+      <p style="margin-bottom:16px">We retain your personal information for as long as you maintain an account with us, unless a longer period is required by law (e.g., tax or accounting obligations). When no longer needed, we delete or anonymize the information.</p>
+
+      <h3 style="color:var(--cyan);font-size:.86rem;margin:20px 0 8px">9. How Do We Keep Your Information Safe?</h3>
+      <p style="margin-bottom:16px">We implement reasonable technical and organizational security measures. However, no method of transmission or storage is 100% secure, and we cannot guarantee absolute security against unauthorized access.</p>
+
+      <h3 style="color:var(--cyan);font-size:.86rem;margin:20px 0 8px">10. Do We Collect Information From Minors?</h3>
+      <p style="margin-bottom:16px">We do not knowingly collect data from children under 18 (or the equivalent age of majority in your jurisdiction). By using the Services, you represent that you meet this age requirement or are the parent/guardian of a minor using the Services under your supervision. If we learn we have collected data from a minor without appropriate consent, we will delete it and deactivate the associated account.</p>
+
+      <h3 style="color:var(--cyan);font-size:.86rem;margin:20px 0 8px">11. What Are Your Privacy Rights?</h3>
+      <p style="margin-bottom:8px">Depending on your location (EEA, UK, Switzerland, Canada, or certain US states), you may have the right to: access and obtain a copy of your data; request correction or deletion; restrict or object to processing; request data portability; and withdraw consent at any time. To exercise these rights, contact us at <a href="mailto:maxbarbetta100@gmail.com" style="color:var(--cyan)">maxbarbetta100@gmail.com</a>.</p>
+      <p style="margin-bottom:16px">You may also review or delete your account information by contacting us directly. EEA/UK residents may lodge a complaint with their local data protection authority.</p>
+
+      <h3 style="color:var(--cyan);font-size:.86rem;margin:20px 0 8px">12. Do-Not-Track Signals</h3>
+      <p style="margin-bottom:16px">We do not currently respond to browser Do-Not-Track (DNT) signals, as no uniform industry standard for recognizing them has been adopted.</p>
+
+      <h3 style="color:var(--cyan);font-size:.86rem;margin:20px 0 8px">13. US State Privacy Rights</h3>
+      <p style="margin-bottom:8px">If you reside in California, Colorado, Connecticut, Delaware, Florida, Indiana, Iowa, Kentucky, Maryland, Minnesota, Montana, Nebraska, New Hampshire, New Jersey, Oregon, Rhode Island, Tennessee, Texas, Utah, or Virginia, you may have rights to know, access, correct, delete, and obtain a copy of your personal data, and to opt out of certain processing. We have collected identifiers (e.g., email), commercial information (purchase history), and internet activity data in the past 12 months. We have not sold or shared personal information with third parties for commercial purposes.</p>
+      <p style="margin-bottom:16px">To exercise these rights or appeal a decision, email <a href="mailto:maxbarbetta100@gmail.com" style="color:var(--cyan)">maxbarbetta100@gmail.com</a>. California residents may also request information under the "Shine the Light" law once per year, free of charge.</p>
+
+      <h3 style="color:var(--cyan);font-size:.86rem;margin:20px 0 8px">14. Updates to This Notice</h3>
+      <p style="margin-bottom:16px">We may update this Privacy Notice periodically. Material changes will be reflected by an updated "Last updated" date above. Continued use of the Services after changes take effect constitutes acceptance of the revised notice.</p>
+
+      <h3 style="color:var(--cyan);font-size:.86rem;margin:20px 0 8px">15. Contact Us</h3>
+      <p style="margin-bottom:4px">Massimo Barbetta</p>
+      <p style="margin-bottom:4px">Calle Arcadio Balaguer 78, 2º-2ª</p>
+      <p style="margin-bottom:4px">Castelldefels, 08860, Spain</p>
+      <p style="margin-bottom:16px">Email: <a href="mailto:maxbarbetta100@gmail.com" style="color:var(--cyan)">maxbarbetta100@gmail.com</a></p>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
