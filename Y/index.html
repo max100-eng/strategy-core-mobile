@@ -801,8 +801,9 @@ document.addEventListener('keydown',e=>{
 // ════════════════════════════════════════════════════════════
 // CONFIGURATION — fill in your values
 // ════════════════════════════════════════════════════════════
-const firebaseConfig = {
-  authDomain:        "strategy-games-b42ee.firebaseapp.com",
+  const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: "strategy-games-b42ee.firebaseapp.com",
   projectId:         "strategy-games-b42ee",
   storageBucket:     "strategy-games-b42ee.firebasestorage.app",
   messagingSenderId: "378940662151",
