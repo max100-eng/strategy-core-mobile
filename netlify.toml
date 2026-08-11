@@ -1,11 +1,11 @@
 [build]
-  publish = "dist"
-  command = "npm run build"
+  publish = "www"
+  command = ""
 
-[[redirects]]
-  from = "/.well-known/*"
-  to = "/.well-known/:splat"
-  status = 200
+[[headers]]
+  for = "/.well-known/assetlinks.json"
+  [headers.values]
+    Content-Type = "application/json"
 
 
 
