@@ -1,71 +1,66 @@
 ##############################################
 # PROGUARD / R8 RULES FOR STRATEGY CORE
-# Optimized for Capacitor, WebView, AI engines,
-# and Google Play Games on PC compatibility.
+# FIXED - Alta optimización para Play Console
 ##############################################
 
-# --- KEEP CAPACITOR CORE ---
--keep class com.getcapacitor.** { *; }
--keep class com.capacitorjs.plugins.** { *; }
+# --- CAPACITOR CORE - Solo lo necesario ---
+-keep class com.getcapacitor.Bridge { *; }
+-keep class com.getcapacitor.Plugin { *; }
+-keep class com.getcapacitor.PluginCall { *; }
+-keep class com.getcapacitor.PluginMethod { *; }
+-keep @com.getcapacitor.annotation.CapacitorPlugin class * { *; }
+-keep @com.getcapacitor.annotation.PluginMethod class * { *; }
+-keep class com.getcapacitor.cordova.MockCordovaWebViewImpl { *; }
 
-# --- KEEP YOUR APP CLASSES ---
--keep class com.strategycore.app.** { *; }
+# --- TU APP - Solo Entry points, no toda la app ---
+-keep class com.strategycore.app.MainActivity { *; }
+-keep class com.strategycore.app.BridgeActivity { *; }
 
-# --- KEEP WEBVIEW JAVASCRIPT INTERFACE ---
+# --- WEBVIEW JAVASCRIPT INTERFACE - Solo métodos anotados ---
 -keepclassmembers class * {
     @android.webkit.JavascriptInterface <methods>;
 }
+-keepattributes JavascriptInterface
 
-# --- KEEP ANDROID WEBVIEW ---
--keep class android.webkit.** { *; }
-
-# --- KEEP REFLECTION-BASED CODE ---
--keepclassmembers class * {
-    *;
-}
-
-# --- KEEP ENUMS (avoid shrink issues) ---
+# --- ENUMS ---
 -keepclassmembers enum * {
     public static **[] values();
     public static ** valueOf(java.lang.String);
 }
 
-# --- KEEP AI ENGINE CLASSES (minimax, neural engine) ---
--keep class **Minimax** { *; }
--keep class **NeuralEngine** { *; }
--keep class **GameAI** { *; }
--keep class **Evaluator** { *; }
--keep class **BoardState** { *; }
+# --- AI ENGINES - Permite ofuscación pero mantiene nombres si los llamas desde JS ---
+# Si tus AI se llaman solo desde Kotlin/Java, puedes borrar este bloque entero
+-keep,allowobfuscation class **.Minimax { <methods>; }
+-keep,allowobfuscation class **.NeuralEngine { <methods>; }
+-keep,allowobfuscation class **.GameAI { <methods>; }
+-keep,allowobfuscation class **.Evaluator { <methods>; }
+-keep,allowobfuscation class **.BoardState { <methods>; }
 
-# --- KEEP GAME LOGIC (avoid shrink of strategy classes) ---
--keep class **Chess** { *; }
--keep class **Go** { *; }
--keep class **Reversi** { *; }
--keep class **Tetris** { *; }
--keep class **Snake** { *; }
--keep class **Minesweeper** { *; }
--keep class **GameManager** { *; }
+# --- JSON - Solo si usas Gson con modelos ---
+-keepattributes Signature, *Annotation*
+-keep class com.google.gson.reflect.TypeToken { *; }
+-keep class * extends com.google.gson.reflect.TypeToken
+-keepclassmembers,allowobfuscation class * {
+  @com.google.gson.annotations.SerializedName <fields>;
+}
 
-# --- KEEP JSON SERIALIZATION ---
--keep class com.google.gson.** { *; }
--keep class com.fasterxml.jackson.** { *; }
+# --- KOTLIN ---
+-keep class kotlin.Metadata { *; }
+-dontwarn kotlin.**
+-dontwarn kotlinx.**
 
-# --- KEEP ANNOTATIONS ---
--keepattributes *Annotation*
+# --- CAPACITOR PLUGINS ---
+-dontwarn com.getcapacitor.**
+-dontwarn org.apache.cordova.**
 
-# --- KEEP KOTLIN (if any plugin uses it) ---
--keep class kotlin.** { *; }
--keep class kotlinx.** { *; }
-
-# --- REMOVE LOGGING IN RELEASE ---
+# --- LOGS FUERA EN RELEASE ---
 -assumenosideeffects class android.util.Log {
     public static *** d(...);
     public static *** v(...);
     public static *** i(...);
-    public static *** w(...);
-    public static *** e(...);
 }
 
-# --- OPTIMIZE BYTECODE ---
--optimizations !code/simplification/arithmetic,!field/*,!class/merging/*
-
+# --- OPTIMIZACIÓN AGRESIVA ---
+-optimizationpasses 5
+-allowaccessmodification
+-repackageclasses

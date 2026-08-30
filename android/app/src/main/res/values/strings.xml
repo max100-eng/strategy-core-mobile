@@ -4,4 +4,5 @@
     <string name="title_activity_main">Strategy Core</string>
     <string name="package_name">com.strategycore.app</string>
     <string name="custom_url_scheme">com.strategycore.app</string>
+    <string translatable="false" name="game_services_project_id">378940662151</string>
 </resources>
