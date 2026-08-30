@@ -32,6 +32,8 @@ import {
   listenFullGame 
 } from "./services/syncService";
 
+import { submitScore } from "./services/submitScore";
+
 /* ============================================================
    CONTROLADOR PRINCIPAL DEL JUEGO
    ============================================================ */
@@ -39,28 +41,20 @@ import {
 export async function iniciarPartida() {
   console.log("Iniciando partida…");
 
-  // 1. Crear partida en Firebase
   const gameId = await createGame("USER_123", "classic");
   await addPlayerToGame(gameId, "USER_123");
   await addPlayerToGame(gameId, "USER_456");
 
   console.log("Partida creada:", gameId);
 
-  // 2. Generar mapa
   const map = generateMap(10);
   console.log("Mapa generado:", map);
 
-  // 3. Escuchar estado completo del juego en tiempo real
   const stopSync = listenFullGame(gameId, (state) => {
     console.log("Estado sincronizado:", state);
   });
 
-  // 4. Turno 1
   await nextTurn(gameId);
-
-  /* ============================================================
-     MOVIMIENTO DEL JUGADOR
-     ============================================================ */
 
   const start = { x: 0, y: 0 };
   const goal = { x: 5, y: 7 };
@@ -68,11 +62,9 @@ export async function iniciarPartida() {
   const path = findPathAStar(map, start, goal);
   console.log("Ruta encontrada:", path);
 
-  // Simular movimiento paso a paso
   for (const step of path) {
     const tile = getTile(map, step.x, step.y);
 
-    // Aplicar efectos del terreno
     let player = {
       id: "USER_123",
       hp: 100,
@@ -85,16 +77,11 @@ export async function iniciarPartida() {
 
     console.log(`Jugador movido a (${step.x}, ${step.y})`, player);
 
-    // Registrar acción en Firebase
     await playerAction(gameId, "USER_123", "move", {
       direction: "path",
       position: step
     });
   }
-
-  /* ============================================================
-     COMBATE
-     ============================================================ */
 
   const attacker = {
     id: "USER_123",
@@ -119,12 +106,7 @@ export async function iniciarPartida() {
 
   console.log("Resultado del ataque:", attackResult);
 
-  // Registrar acción de ataque
   await playerAction(gameId, "USER_123", "attack", attackResult);
-
-  /* ============================================================
-     REGLAS DE VICTORIA
-     ============================================================ */
 
   const gameState = {
     players: [
@@ -138,6 +120,18 @@ export async function iniciarPartida() {
   if (winner) {
     console.log("Ganador detectado:", winner);
   }
+
+  /* ============================================================
+     ENVÍO DE PUNTUACIONES A GOOGLE PLAY GAMES
+     ============================================================ */
+
+  submitScore("chess_elo", 1200);
+  submitScore("go_wins", 3);
+  submitScore("tetris_lines", path.length);
+  submitScore("minesweeper_best_time", 42);
+  submitScore("snake_highscore", 150);
+  submitScore("2048_best_tile", 4096);
+  submitScore("reversi_wins", 1);
 
   return {
     gameId,

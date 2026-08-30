@@ -1,295 +1,54 @@
+
 <!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Strategy Core v9.9</title>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@300;400;600&display=swap" rel="stylesheet">
-<style>
-:root{--bg:#040912;--panel:#07101f;--border:#0a2540;--cyan:#00d4ff;--cyan2:#005577;--gold:#ffc857;--red:#ff3366;--green:#00ff88;--text:#a8c8e8;--dim:#5a7a9a}
-*{margin:0;padding:0;box-sizing:border-box}
-body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;overflow-x:hidden}
-#landing{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:32px;padding:28px;position:relative}
-.logo-ring{width:96px;height:96px;border:1px solid var(--border);border-radius:50%;display:flex;align-items:center;justify-content:center;position:relative}
-.logo-ring::before{content:'';position:absolute;inset:-4px;border:1px solid var(--border);border-radius:50%;border-top-color:var(--cyan);animation:spin 1s linear 1 forwards}
-@keyframes spin{to{transform:rotate(360deg)}}
-.suite-title{font-family:'Orbitron',sans-serif;font-size:2.1rem;font-weight:900;color:var(--cyan);text-shadow:0 0 20px rgba(0,212,255,.4);letter-spacing:.18em}
-.suite-sub{font-size:.6rem;color:var(--dim);letter-spacing:.35em;text-align:center}
-.cards{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;max-width:1100px}
-.card{background:var(--panel);border:1px solid var(--border);padding:24px 20px;min-width:150px;width:160px;cursor:pointer;transition:all.3s;position:relative;text-align:center}
-.card:hover{border-color:var(--cyan);box-shadow:0 0 20px rgba(0,212,255,.15);transform:translateY(-3px)}
-.card-icon{font-size:2.2rem;display:block;margin-bottom:10px;filter:drop-shadow(0 0 8px rgba(0,212,255,.3))}
-.card-name{font-family:'Orbitron',sans-serif;font-size:.78rem;color:var(--cyan);letter-spacing:.18em}
-.card-desc{font-size:.52rem;color:var(--dim);margin-top:6px;line-height:1.6}
-.view{display:none;flex-direction:column;align-items:center;min-height:100vh;padding:14px 12px 36px;gap:10px}
-.hdr{display:flex;align-items:center;gap:10px;width:100%;max-width:980px;padding-bottom:9px;border-bottom:1px solid var(--border)}
-.hdr-title{font-family:'Orbitron',sans-serif;font-size:.85rem;color:var(--cyan);flex:1;letter-spacing:.14em}
-.btn{background:transparent;border:1px solid var(--border);color:var(--dim);padding:4px 11px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:.65rem;touch-action:manipulation}
-.btn:hover,.btn.active{border-color:var(--cyan);color:var(--cyan)}
-.btn-p{border-color:var(--cyan2);color:var(--cyan)}
-canvas{background:#050912;border:1px solid var(--border);touch-action:none;-webkit-touch-callout:none}
-#ms-grid{display:grid;gap:2px}
-.ms-cell{width:28px;height:28px;background:#0a1a2a;border:1px solid #0e2a4a;display:flex;align-items:center;justify-content:center;font-size:.75rem;cursor:pointer;user-select:none}
-.ms-cell.revealed{background:#040912}
-.ms-cell.mine{background:var(--red)}
-.ms-cell.flagged{color:var(--gold)}
-.g2048-grid{display:grid;grid-template-columns:repeat(4,70px);gap:8px}
-.g2048-cell{width:70px;height:70px;background:#0a1a2a;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:'Orbitron';font-weight:700;font-size:1.4rem}
-.square{width:52px;height:52px;display:flex;align-items:center;justify-content:center;font-size:26px;cursor:pointer;user-select:none;border:1px solid transparent}
-.square.light{background:#102040}
-.square.dark{background:#0a1428}
-.square.selected{outline:2px solid #00d4ff;outline-offset:-2px}
-.square.move{background:rgba(0,212,255,.22)!important}
-.square.capture{background:rgba(255,51,102,.35)!important}
-.piece{filter:drop-shadow(0 0 4px rgba(0,212,255,.3));pointer-events:none;transition:transform 0.5s ease, left 0.5s ease, top 0.5s ease;will-change:transform}
-#chess-board{display:grid;grid-template-columns:repeat(8,52px);grid-template-rows:repeat(8,52px);border:1px solid #0a2540;gap:0}
-.promo-modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:100}
-.promo-modal.show{display:flex}
-.promo-pieces{display:flex;gap:8px;background:#07101f;border:1px solid #0a2540;padding:12px}
-.promo-piece{width:48px;height:48px;display:flex;align-items:center;justify-content:center;font-size:28px;cursor:pointer;border:1px solid #0a2540}
-.promo-piece:hover{border-color:#00d4ff}
-</style>
-</head>
-<body>
-<div id="landing">
-  <div class="logo-ring"><span style="font-size:32px">⚔</span></div>
-  <div class="suite-title">STRATEGY CORE</div>
-  <div class="suite-sub">// AI GAME SUITE · v9.9 //</div>
-  <div class="cards">
-    <div class="card" onclick="showGame('chess')"><span class="card-icon">♟</span><div class="card-name">CHESS</div><div class="card-desc">vs Neural Engine<br>Minimax α-β · depth 3</div></div>
-    <div class="card" onclick="showGame('go')"><span class="card-icon">⚪</span><div class="card-name">GO · 9x9</div><div class="card-desc">Territory war<br>Full Ko rules</div></div>
-    <div class="card" onclick="showGame('ms')"><span class="card-icon">💣</span><div class="card-name">MINESWEEPER</div><div class="card-desc">Classic field sweep<br>3 difficulty levels</div></div>
-    <div class="card" onclick="showGame('snake')"><span class="card-icon">🐍</span><div class="card-name">SNAKE</div><div class="card-desc">Classic arcade<br>3 speed modes</div></div>
-    <div class="card" onclick="showGame('tet')"><span class="card-icon">🟦</span><div class="card-name">TETRIS</div><div class="card-desc">Classic blocks<br>Ghost · Hold · 7-bag</div></div>
-    <div class="card" onclick="showGame('rv')"><span class="card-icon">⚫</span><div class="card-name">REVERSI</div><div class="card-desc">vs Neural Engine<br>Minimax α-β · 8x8</div></div>
-    <div class="card" onclick="showGame('2048')"><span class="card-icon">🔢</span><div class="card-name">2048</div><div class="card-desc">Merge tiles<br>Reach 2048!</div></div>
-  </div>
-  <div style="font-size:.5rem;color:var(--border);letter-spacing:.3em;margin-top:20px">SELECT PROTOCOL TO INITIALIZE</div>
-</div>
-
-<div id="chess-view" class="view">
-  <div class="hdr"><div class="hdr-title">CHESS // Minimax α-β</div><button class="btn" onclick="showLanding()">← BACK</button><button class="btn btn-p" onclick="window.chessNew?.()">NEW GAME</button></div>
-  <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center">
-    <div id="chess-board" style="display:grid;grid-template-columns:repeat(8,52px);border:1px solid #0a2540"></div>
-    <div style="min-width:180px"><div id="chess-status" style="font-size:.7rem;margin-bottom:8px">White to move</div><div id="chess-captured" style="font-size:.6rem"></div></div>
-  </div>
-</div>
-
-<div id="go-view" class="view">
-  <div class="hdr"><div class="hdr-title">GO 9x9 // Territory <span id="g-dot" class="dot"></span><span id="g-think" style="display:none"> AI thinking…</span></div><button class="btn" onclick="showLanding()">← BACK</button><button class="btn" onclick="goPass()">PASS</button><button class="btn" onclick="goResign()">RESIGN</button><button class="btn btn-p" onclick="initGo()">NEW</button></div>
-  <div style="display:flex;gap:12px"><canvas id="go-canvas" width="450" height="450"></canvas><div style="font-size:.65rem"><div>B Captured: <span id="g-bc">0</span></div><div>W Captured: <span id="g-wc">0</span></div><div id="g-status" style="margin-top:8px">Your turn</div><div id="go-result" style="display:none;margin-top:12px;border:1px solid var(--border);padding:8px"><div>Black: <span id="g-res-b"></span></div><div>White: <span id="g-res-w"></span></div><div id="g-res-win" style="color:var(--cyan);margin-top:4px"></div></div></div></div>
-</div>
-
-<div id="ms-view" class="view">
-  <div class="hdr"><div class="hdr-title">MINESWEEPER // <span id="ms-mines">010</span> 💣 <span id="ms-timer">000</span> ⏱ <span id="ms-face">🙂</span></div><button class="btn" onclick="showLanding()">← BACK</button><button class="btn" onclick="msSetDiff('easy',this)" >EASY</button><button class="btn" onclick="msSetDiff('medium',this)">MED</button><button class="btn" onclick="msSetDiff('hard',this)">HARD</button><button class="btn btn-p" onclick="msInit()">NEW</button></div>
-  <div><button id="ms-flag-btn" class="btn" onclick="msToggleFlagMode()">🚩 FLAG MODE: OFF</button></div>
-  <div id="ms-grid"></div>
-</div>
-
-<div id="snake-view" class="view">
-  <div class="hdr"><div class="hdr-title">SNAKE // Score <span id="snake-score">0</span> HI <span id="snake-hi">0</span></div><button class="btn" onclick="showLanding()">← BACK</button><button class="btn" onclick="snakeSetSpeed('slow',this)">SLOW</button><button class="btn active" onclick="snakeSetSpeed('norm',this)">NORM</button><button class="btn" onclick="snakeSetSpeed('fast',this)">FAST</button><button class="btn btn-p" onclick="snakeInit()">NEW</button></div>
-  <div style="position:relative"><canvas id="snake-canvas" width="360" height="360"></canvas><div id="snake-overlay" style="position:absolute;inset:0;background:rgba(4,9,18,.85);display:flex;flex-direction:column;align-items:center;justify-content:center"><div id="snake-over-title" style="font-family:Orbitron;color:var(--cyan)">PRESS START</div><div id="snake-over-sub" style="font-size:.6rem;margin-top:6px">SCORE: 0</div><button class="btn btn-p" style="margin-top:12px" onclick="snakeStart()">START</button></div></div>
-  <div style="display:grid;grid-template-columns:50px 50px 50px;gap:8px;margin-top:12px;justify-content:center"><span></span><button class="btn" style="height:50px" onclick="snakeDir('UP')" ontouchstart="snakeDir('UP');event.preventDefault()">↑</button><span></span><button class="btn" style="height:50px" onclick="snakeDir('LEFT')" ontouchstart="snakeDir('LEFT');event.preventDefault()">←</button><button class="btn" style="height:50px" onclick="snakeDir('DOWN')" ontouchstart="snakeDir('DOWN');event.preventDefault()">↓</button><button class="btn" style="height:50px" onclick="snakeDir('RIGHT')" ontouchstart="snakeDir('RIGHT');event.preventDefault()">→</button></div>
-</div>
-
-<div id="tet-view" class="view">
-  <div class="hdr"><div class="hdr-title">TETRIS // Score <span id="tet-score">0</span> Lines <span id="tet-lines">0</span> Lv <span id="tet-level">1</span></div><button class="btn" onclick="showLanding()">← BACK</button><button class="btn btn-p" onclick="tetInit()">NEW</button></div>
-  <div style="display:flex;gap:12px"><canvas id="tet-canvas" width="240" height="480"></canvas><div><div>Next</div><canvas id="tet-next" width="80" height="80"></canvas><div style="margin-top:8px">Hold (C)</div><canvas id="tet-hold" width="80" height="80"></canvas><div style="margin-top:12px;font-size:.55rem;line-height:1.6">← → Move<br>↑ Rotate<br>↓ Soft<br>SPACE Hard<br>C Hold</div></div></div>
-  <div style="display:grid;grid-template-columns:50px 50px 50px;gap:8px;margin-top:12px;justify-content:center">
-    <span></span><button class="btn" style="height:50px" onclick="window.tetRotate()" ontouchstart="window.tetRotate();event.preventDefault()">↻</button><span></span>
-    <button class="btn" style="height:50px" onclick="window.tetMove(-1)" ontouchstart="window.tetMove(-1);event.preventDefault()">←</button>
-    <button class="btn" style="height:50px" onclick="window.tetDrop()" ontouchstart="window.tetDrop();event.preventDefault()">↓</button>
-    <button class="btn" style="height:50px" onclick="window.tetMove(1)" ontouchstart="window.tetMove(1);event.preventDefault()">→</button>
-    <span></span><button class="btn" style="height:50px" onclick="window.tetHardDrop()" ontouchstart="window.tetHardDrop();event.preventDefault()">⤓</button><span></span>
-  </div>
-</div>
-
-<div id="rv-view" class="view">
-  <div class="hdr"><div class="hdr-title">REVERSI // B <span id="rv-sb">2</span> W <span id="rv-sw">2</span> <span id="rv-dot"></span><span id="rv-think" style="display:none"> AI…</span></div><button class="btn" onclick="showLanding()">← BACK</button><button class="btn btn-p" onclick="rvInit()">NEW</button></div>
-  <div><canvas id="rv-canvas" width="360" height="360"></canvas><div id="rv-status" style="text-align:center;font-size:.7rem;margin-top:6px">Your turn</div></div>
-</div>
-
-<div id="g2048-view" class="view">
-  <div class="hdr"><div class="hdr-title">2048 // Score <span id="g2048-score">0</span> Best <span id="g2048-hi">0</span> <span id="g2048-status"></span></div><button class="btn" onclick="showLanding()">← BACK</button><button class="btn btn-p" onclick="g2048Init()">NEW</button></div>
-  <div id="g2048-grid" class="g2048-grid"></div>
-  <div style="margin-top:10px;display:flex;gap:6px"><button class="btn" onclick="g2048Move('UP')">↑</button><button class="btn" onclick="g2048Move('LEFT')">←</button><button class="btn" onclick="g2048Move('DOWN')">↓</button><button class="btn" onclick="g2048Move('RIGHT')">→</button></div>
-</div>
-
-<style>#go-canvas{background:#c9974f!important}</style>
-<script>
-function showLanding(){document.querySelectorAll('.view').forEach(v=>v.style.display='none');document.getElementById('landing').style.display='flex';}
-function showGame(id){
-  const map={ms:'ms-view','2048':'g2048-view',tet:'tet-view',go:'go-view',rv:'rv-view',snake:'snake-view',chess:'chess-view'};
-  document.getElementById('landing').style.display='none';
-  document.querySelectorAll('.view').forEach(v=>v.style.display='none');
-  const v=document.getElementById(map[id]||id+'-view'); if(v) v.style.display='flex';
-  const real={ms:'mines',tet:'tetris'}[id]||id;
-  if(real==='chess') window.initChess?.();
-  if(real==='go') window.initGo?.();
-  if(real==='mines') window.msInit?.();
-  if(real==='snake') window.snakeInit?.();
-  if(real==='tetris') window.tetInit?.();
-  if(real==='rv') window.rvInit?.();
-  if(real==='2048') window.g2048Init?.();
-}
-window.showLanding=showLanding;window.showGame=showGame;window.scLaunch=showGame;
-</script>
-<script>
-// === MINESWEEPER ISOLATED ===
-(function(){
-  let msRows,msCols,msMines,msGrid,msFlagMode=false,msGameOver=false,msFirstClick=true,msTimer=0,msTimerInt=null,msDiff='easy';
-  const DIFFS={easy:{r:8,c:8,m:10},medium:{r:12,c:12,m:25},hard:{r:16,c:16,m:45}};
-  window.msSetDiff=function(d,el){ msDiff=d; document.querySelectorAll('#ms-view.btn').forEach(b=>b.classList.remove('active')); if(el)el.classList.add('active'); msInit(); };
-  window.msToggleFlagMode=function(){ msFlagMode=!msFlagMode; const b=document.getElementById('ms-flag-btn'); if(b) b.textContent='🚩 FLAG MODE: '+(msFlagMode?'ON':'OFF'); };
-  window.msInit=function(){
-    const d=DIFFS[msDiff]; msRows=d.r; msCols=d.c; msMines=d.m;
-    msGameOver=false; msFirstClick=true; msTimer=0; clearInterval(msTimerInt); msGrid=[];
-    for(let r=0;r<msRows;r++){ const row=[]; for(let c=0;c<msCols;c++) row.push({mine:false,revealed:false,flagged:false,adj:0}); msGrid.push(row); }
-    const face=document.getElementById('ms-face'); if(face) face.textContent='🙂'; updateMsCounters(); renderMs();
-  };
-  function placeMines(exR,exC){ let p=0; while(p<msMines){ const r=Math.floor(Math.random()*msRows), c=Math.floor(Math.random()*msCols); if(msGrid[r][c].mine) continue; if(Math.abs(r-exR)<=1&&Math.abs(c-exC)<=1) continue; msGrid[r][c].mine=true; p++; } for(let r=0;r<msRows;r++) for(let c=0;c<msCols;c++){ if(msGrid[r][c].mine) continue; let n=0; for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++){ if(!dr&&!dc) continue; const nr=r+dr,nc=c+dc; if(nr>=0&&nr<msRows&&nc>=0&&nc<msCols&&msGrid[nr][nc].mine) n++; } msGrid[r][c].adj=n; } }
-  function msReveal(r,c){ if(r<0||r>=msRows||c<0||c>=msCols) return; const cell=msGrid[r][c]; if(cell.revealed||cell.flagged) return; cell.revealed=true; if(cell.adj===0&&!cell.mine){ for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++) if(dr||dc) msReveal(r+dr,c+dc); } }
-  function msCellClick(r,c){ if(msGameOver) return; const cell=msGrid[r][c]; if(msFlagMode){ if(!cell.revealed){ cell.flagged=!cell.flagged; updateMsCounters(); renderMs(); } return; } if(cell.flagged||cell.revealed) return; if(msFirstClick){ placeMines(r,c); msFirstClick=false; msTimerInt=setInterval(()=>{ msTimer++; updateMsCounters(); },1000); } if(cell.mine){ cell.revealed=true; cell.exploded=true; msGameOver=true; clearInterval(msTimerInt); const face=document.getElementById('ms-face'); if(face) face.textContent='😵'; for(let rr=0;rr<msRows;rr++) for(let cc=0;cc<msCols;cc++) if(msGrid[rr][cc].mine) msGrid[rr][cc].revealed=true; renderMs(); return; } msReveal(r,c); if(checkMsWin()){ msGameOver=true; clearInterval(msTimerInt); const face=document.getElementById('ms-face'); if(face) face.textContent='😎'; renderMs(); setTimeout(()=>{alert('¡Victoria! Tiempo: '+msTimer+'s');},150); return; } renderMs(); }
-  function msCellRightClick(e,r,c){ e.preventDefault(); if(msGameOver) return; const cell=msGrid[r][c]; if(!cell.revealed){ cell.flagged=!cell.flagged; updateMsCounters(); renderMs(); } }
-  function checkMsWin(){ for(let r=0;r<msRows;r++) for(let c=0;c<msCols;c++) if(!msGrid[r][c].mine&&!msGrid[r][c].revealed) return false; return true; }
-  function updateMsCounters(){ let f=0; for(let r=0;r<msRows;r++) for(let c=0;c<msCols;c++) if(msGrid[r][c].flagged) f++; const mEl=document.getElementById('ms-mines'); if(mEl) mEl.textContent=String(Math.max(0,msMines-f)).padStart(3,'0'); const tEl=document.getElementById('ms-timer'); if(tEl) tEl.textContent=String(Math.min(999,msTimer)).padStart(3,'0'); }
-  function renderMs(){ const grid=document.getElementById('ms-grid'); if(!grid) return; grid.style.gridTemplateColumns=`repeat(${msCols}, 32px)`; grid.innerHTML=''; const NC={1:'n1',2:'n2',3:'n3',4:'n4',5:'n5',6:'n6',7:'n7',8:'n8'}; for(let r=0;r<msRows;r++) for(let c=0;c<msCols;c++){ const cell=msGrid[r][c]; const div=document.createElement('div'); div.className='ms-cell'+(cell.revealed?' revealed':'')+(cell.exploded?' exploded':''); if(cell.revealed&&cell.mine) div.classList.add('mine'), div.textContent='💣'; else if(cell.flagged) div.classList.add('flagged'), div.textContent='🚩'; else if(cell.revealed&&cell.adj>0){ div.classList.add(NC[cell.adj]); div.textContent=cell.adj; } div.addEventListener('click',()=>msCellClick(r,c)); div.addEventListener('contextmenu',(e)=>msCellRightClick(e,r,c)); grid.appendChild(div); } }
-})();
-
-// === SNAKE ISOLATED - SPEEDS CORREGIDOS ===
-(function(){
-  const CELL=20,COLS=18,ROWS=18; let snake,dir,nextDir,food,score,hi,speed='norm',loopId,running=false; const SPEEDS={slow:220,norm:160,fast:90};
-  window.snakeSetSpeed=function(s,el){ speed=s; document.querySelectorAll('#snake-view.btn').forEach(b=>b.classList.remove('active')); if(el)el.classList.add('active'); };
-  window.snakeDir=function(d){ const opp={UP:'DOWN',DOWN:'UP',LEFT:'RIGHT',RIGHT:'LEFT'}; if(opp[d]!==dir) nextDir=d; };
-  document.addEventListener('keydown',(e)=>{ const m={ArrowUp:'UP',ArrowDown:'DOWN',ArrowLeft:'LEFT',ArrowRight:'RIGHT'}; if(m[e.key]) window.snakeDir(m[e.key]); });
-  window.snakeInit=function(){ clearInterval(loopId); running=false; snake=[{x:8,y:9},{x:7,y:9},{x:6,y:9}]; dir='RIGHT'; nextDir='RIGHT'; score=0; hi=parseInt(localStorage.getItem('snakeHi')||'0'); placeFood(); updateHud(); const ov=document.getElementById('snake-overlay'); if(ov) ov.style.display='flex'; const t=document.getElementById('snake-over-title'); if(t) t.textContent='PRESS START'; drawSnake(); };
-  window.snakeStart=function(){ const ov=document.getElementById('snake-overlay'); if(ov) ov.style.display='none'; running=true; clearInterval(loopId); loopId=setInterval(tick, SPEEDS[speed]); };
-  function placeFood(){ let fx,fy,col; do{ fx=Math.floor(Math.random()*COLS); fy=Math.floor(Math.random()*ROWS); col=snake.some(s=>s.x===fx&&s.y===fy); }while(col); food={x:fx,y:fy}; }
-  function tick(){ dir=nextDir; const h={...snake[0]}; if(dir==='UP') h.y--; else if(dir==='DOWN') h.y++; else if(dir==='LEFT') h.x--; else h.x++; if(h.x<0||h.x>=COLS||h.y<0||h.y>=ROWS||snake.some(s=>s.x===h.x&&s.y===h.y)){ gameOver(); return; } snake.unshift(h); if(h.x===food.x&&h.y===food.y){ score+=20; if(score>hi){ hi=score; localStorage.setItem('snakeHi',hi); } updateHud(); placeFood(); } else snake.pop(); drawSnake(); }
-  function gameOver(){ clearInterval(loopId); running=false; const ov=document.getElementById('snake-overlay'); if(ov) ov.style.display='flex'; const t=document.getElementById('snake-over-title'); if(t) t.textContent='GAME OVER'; const s=document.getElementById('snake-over-sub'); if(s) s.textContent='SCORE: '+score; }
-  function updateHud(){ const sc=document.getElementById('snake-score'); if(sc) sc.textContent=score; const hiEl=document.getElementById('snake-hi'); if(hiEl) hiEl.textContent=hi; }
-  function drawSnake(){ const cv=document.getElementById('snake-canvas'); if(!cv) return; const ctx=cv.getContext('2d'); ctx.fillStyle='#040912'; ctx.fillRect(0,0,cv.width,cv.height); ctx.fillStyle='#ffc857'; ctx.fillRect(food.x*CELL+2,food.y*CELL+2,CELL-4,CELL-4); snake.forEach((s,i)=>{ ctx.fillStyle=i===0?'#00d4ff':'#005577'; ctx.fillRect(s.x*CELL+1,s.y*CELL+1,CELL-2,CELL-2); }); }
-})();
-
-// === GO 9x9 ISOLATED - FIXED DRAW ===
-(function(){
-  const SIZE=9,MARGIN=30; let g_board,g_turn,g_capB,g_capW,g_pass,g_over,g_CELL;
-  window.initGo=function(){
-    g_board=Array.from({length:SIZE},()=>Array(SIZE).fill(null));
-    g_turn='B'; g_capB=0; g_capW=0; g_pass=0; g_over=false;
-    const cv=document.getElementById('go-canvas');
-    if(!cv){console.error('go-canvas missing');return;}
-    g_CELL=(cv.width-2*MARGIN)/(SIZE-1);
-    const gr=document.getElementById('go-result'); if(gr) gr.style.display='none';
-    updateGo(); drawGo(); attachGo();
-  };
-  function group(b,r,c){ const col=b[r][c]; if(!col) return {stones:[],libs:new Set()}; const stones=[]; const vis=new Set(); const libs=new Set(); const st=[[r,c]]; while(st.length){ const [cr,cc]=st.pop(); const k=cr+','+cc; if(vis.has(k)) continue; vis.add(k); stones.push([cr,cc]); for(const [dr,dc] of [[-1,0],[1,0],[0,-1],[0,1]]){ const nr=cr+dr,nc=cc+dc; if(nr<0||nr>=SIZE||nc<0||nc>=SIZE) continue; if(b[nr][nc]===null) libs.add(nr+','+nc); else if(b[nr][nc]===col&&!vis.has(nr+','+nc)) st.push([nr,nc]); } } return {stones,liberties:libs}; }
-  function tryM(b,r,c,col){ if(b[r][c]!==null) return null; const nb=b.map(row=>row.slice()); nb[r][c]=col; const opp=col==='B'?'W':'B'; let cap=[]; for(const [dr,dc] of [[-1,0],[1,0],[0,-1],[0,1]]){ const nr=r+dr,nc=c+dc; if(nr<0||nr>=SIZE||nc<0||nc>=SIZE) continue; if(nb[nr][nc]===opp){ const g=group(nb,nr,nc); if(g.liberties.size===0){ g.stones.forEach(([sr,sc])=>{ nb[sr][sc]=null; }); cap=cap.concat(g.stones); } } } const own=group(nb,r,c); if(own.liberties.size===0&&!cap.length) return null; return {board:nb,captured:cap}; }
-  function clickGo(r,c){ if(g_over||g_turn!=='B') return; const res=tryM(g_board,r,c,'B'); if(!res) return; g_board=res.board; g_capB+=res.captured.length; g_pass=0; g_turn='W'; updateGo(); drawGo(); setTimeout(aiGo,400); }
-  function aiGo(){ if(g_over) return; const th=document.getElementById('g-think'); if(th) th.style.display='inline'; setTimeout(()=>{ const cand=[]; for(let r=0;r<SIZE;r++) for(let c=0;c<SIZE;c++){ const res=tryM(g_board,r,c,'W'); if(res){ let sc=res.captured.length*10+Math.random()*3; const g=group(res.board,r,c); sc+=g.liberties.size; cand.push({r,c,result:res,score:sc}); } } if(th) th.style.display='none'; if(!cand.length){ goPass(); return; } cand.sort((a,b)=>b.score-a.score); const pick=cand[Math.floor(Math.random()*Math.min(3,cand.length))]; g_board=pick.result.board; g_capW+=pick.result.captured.length; g_pass=0; g_turn='B'; updateGo(); drawGo(); },300); }
-  window.goPass=function(){ if(g_over) return; g_pass++; if(g_pass>=2){ endGo(); return; } g_turn=g_turn==='B'?'W':'B'; updateGo(); if(g_turn==='W') setTimeout(aiGo,300); };
-  window.goResign=function(){ if(g_over) return; g_over=true; const w=g_turn==='B'?'White':'Black'; const st=document.getElementById('g-status'); if(st) st.textContent=w+' wins by resignation'; };
-  function terr(){ const vis=Array.from({length:SIZE},()=>Array(SIZE).fill(false)); let bT=0,wT=0; for(let r=0;r<SIZE;r++) for(let c=0;c<SIZE;c++){ if(g_board[r][c]!==null||vis[r][c]) continue; const reg=[]; const bord=new Set(); const st=[[r,c]]; while(st.length){ const [cr,cc]=st.pop(); if(cr<0||cr>=SIZE||cc<0||cc>=SIZE||vis[cr][cc]) continue; if(g_board[cr][cc]!==null){ bord.add(g_board[cr][cc]); continue; } vis[cr][cc]=true; reg.push([cr,cc]); st.push([cr-1,cc],[cr+1,cc],[cr,cc-1],[cr,cc+1]); } if(bord.size===1){ if(bord.has('B')) bT+=reg.length; else wT+=reg.length; } } return {bTerr:bT,wTerr:wT}; }
-  function endGo(){ g_over=true; let bS=0,wS=0; for(let r=0;r<SIZE;r++) for(let c=0;c<SIZE;c++){ if(g_board[r][c]==='B') bS++; if(g_board[r][c]==='W') wS++; } const {bTerr,wTerr}=terr(); const bT=bS+bTerr, wT=wS+wTerr+6.5; const gr=document.getElementById('go-result'); if(gr) gr.style.display='block'; const rb=document.getElementById('g-res-b'); if(rb) rb.textContent=bT; const rw=document.getElementById('g-res-w'); if(rw) rw.textContent=wT.toFixed(1); const win=document.getElementById('g-res-win'); if(win) win.textContent=(bT>wT?'BLACK WINS':'WHITE WINS'); }
-  function updateGo(){ const bc=document.getElementById('g-bc'); if(bc) bc.textContent=g_capB; const wc=document.getElementById('g-wc'); if(wc) wc.textContent=g_capW; const st=document.getElementById('g-status'); if(st&&!g_over) st.textContent= g_turn==='B'?'Your turn (Black ●)':'AI turn (White ○)'; const dot=document.getElementById('g-dot'); if(dot) dot.className='dot'+(g_turn==='W'?' ai':''); }
-  function attachGo(){ const cv=document.getElementById('go-canvas'); if(!cv||cv.dataset.bound) return; cv.dataset.bound='1'; cv.addEventListener('click',(e)=>{ const rect=cv.getBoundingClientRect(); const sx=cv.width/rect.width, sy=cv.height/rect.height; const x=(e.clientX-rect.left)*sx, y=(e.clientY-rect.top)*sy; const c=Math.round((x-MARGIN)/g_CELL), r=Math.round((y-MARGIN)/g_CELL); if(r<0||r>=SIZE||c<0||c>=SIZE) return; clickGo(r,c); }); }
-  function drawGo(){ const cv=document.getElementById('go-canvas'); if(!cv) return; const ctx=cv.getContext('2d'); if(!ctx) return; ctx.fillStyle='#c9974f'; ctx.fillRect(0,0,cv.width,cv.height); ctx.strokeStyle='#3a2a10'; ctx.lineWidth=1.5; for(let i=0;i<SIZE;i++){ ctx.beginPath(); ctx.moveTo(MARGIN,MARGIN+i*g_CELL); ctx.lineTo(MARGIN+(SIZE-1)*g_CELL,MARGIN+i*g_CELL); ctx.stroke(); ctx.beginPath(); ctx.moveTo(MARGIN+i*g_CELL,MARGIN); ctx.lineTo(MARGIN+i*g_CELL,MARGIN+(SIZE-1)*g_CELL); ctx.stroke(); }
-    const hoshi=[2,6]; hoshi.forEach(r=>hoshi.forEach(c=>{ ctx.beginPath(); ctx.arc(MARGIN+c*g_CELL,MARGIN+r*g_CELL,4,0,Math.PI*2); ctx.fillStyle='#3a2a10'; ctx.fill(); }));
-    for(let r=0;r<SIZE;r++) for(let c=0;c<SIZE;c++) if(g_board[r][c]){ ctx.beginPath(); ctx.arc(MARGIN+c*g_CELL,MARGIN+r*g_CELL,g_CELL/2-3,0,Math.PI*2); ctx.fillStyle=g_board[r][c]==='B'?'#111':'#eee'; ctx.fill(); ctx.strokeStyle='#000'; ctx.stroke(); }
-  }
-})();
-
-// === 2048 ===
-(function(){
-  let grid,score,hi; const COLORS={2:'#3a4a6a',4:'#4a5a7a',8:'#ff8844',16:'#ff6644',32:'#ff4466',64:'#ff2266',128:'#ffcc44',256:'#ffdd44',512:'#ffee44',1024:'#00ff88',2048:'#00d4ff'};
-  window.g2048Init=function(){ grid=Array.from({length:4},()=>Array(4).fill(0)); score=0; hi=parseInt(localStorage.getItem('g2048Hi')||'0'); add(); add(); upd(''); ren(); };
-  function add(){ const e=[]; for(let r=0;r<4;r++) for(let c=0;c<4;c++) if(grid[r][c]===0) e.push({r,c}); if(!e.length) return; const {r,c}=e[Math.floor(Math.random()*e.length)]; grid[r][c]=Math.random()<0.9?2:4; }
-  window.g2048Move=function(dir){ const b=JSON.stringify(grid); if(dir==='LEFT'||dir==='RIGHT') horiz(dir==='RIGHT'); else vert(dir==='DOWN'); if(JSON.stringify(grid)!==b){ add(); if(score>hi){ hi=score; localStorage.setItem('g2048Hi',hi); } ren(); upd(isOver()?'GAME OVER!':''); } };
-  document.addEventListener('keydown',(e)=>{ const m={ArrowUp:'UP',ArrowDown:'DOWN',ArrowLeft:'LEFT',ArrowRight:'RIGHT'}; if(m[e.key]&&document.getElementById('g2048-view')?.style.display!=='none') window.g2048Move(m[e.key]); });
-  function slide(a){ let v=a.filter(x=>x!==0); for(let i=0;i<v.length-1;i++){ if(v[i]===v[i+1]){ v[i]*=2; score+=v[i]; v.splice(i+1,1); } } while(v.length<4) v.push(0); return v; }
-  function horiz(rev){ for(let r=0;r<4;r++){ let row=grid[r].slice(); if(rev) row.reverse(); row=slide(row); if(rev) row.reverse(); grid[r]=row; } }
-  function vert(rev){ for(let c=0;c<4;c++){ let col=[grid[0][c],grid[1][c],grid[2][c],grid[3][c]]; if(rev) col.reverse(); col=slide(col); if(rev) col.reverse(); for(let r=0;r<4;r++) grid[r][c]=col[r]; } }
-  function isOver(){ for(let r=0;r<4;r++) for(let c=0;c<4;c++){ if(grid[r][c]===0) return false; if(c<3&&grid[r][c]===grid[r][c+1]) return false; if(r<3&&grid[r][c]===grid[r+1][c]) return false; } return true; }
-  function upd(s){ const sc=document.getElementById('g2048-score'); if(sc) sc.textContent=score; const he=document.getElementById('g2048-hi'); if(he) he.textContent=hi; const st=document.getElementById('g2048-status'); if(st) st.textContent=s; }
-  function ren(){ const el=document.getElementById('g2048-grid'); if(!el) return; el.innerHTML=''; for(let r=0;r<4;r++) for(let c=0;c<4;c++){ const v=grid[r][c]; const d=document.createElement('div'); d.className='g2048-cell'+(v===0?' g2048-empty':''); if(v>0){ d.textContent=v; d.style.background=COLORS[v]||'#00d4ff'; d.style.color=v<=4?'#a8c8e8':'#040912'; } el.appendChild(d); } }
-})();
-
-// === REVERSI ===
-(function(){
-  let board,turn,over; const SIZE=8,CELL=45; const WEIGHTS=[[100,-20,10,5,5,10,-20,100],[-20,-50,-2,-2,-50,-20],[10,-2,1,1,-2,10],[5,-2,1,0,0,1,-2,5],[5,-2,1,0,0,1,-2,5],[10,-2,1,1,-2,10],[-20,-50,-2,-2,-2,-2,-50,-20],[100,-20,10,5,5,10,-20,100]]; const DIRS=[[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
-  window.rvInit=function(){ board=Array.from({length:8},()=>Array(8).fill(null)); board[3][3]='W'; board[3][4]='B'; board[4][3]='B'; board[4][4]='W'; turn='B'; over=false; upd(); draw(); attach(); };
-  function flips(b,r,c,col){ if(b[r][c]) return []; const opp=col==='B'?'W':'B'; let all=[]; for(const [dr,dc] of DIRS){ let nr=r+dr,nc=c+dc,line=[]; while(nr>=0&&nr<8&&nc>=0&&nc<8&&b[nr][nc]===opp){ line.push([nr,nc]); nr+=dr; nc+=dc; } if(line.length&&nr>=0&&nr<8&&nc>=0&&nc<8&&b[nr][nc]===col) all=all.concat(line); } return all; }
-  function moves(b,col){ const m=[]; for(let r=0;r<8;r++) for(let c=0;c<8;c++){ const f=flips(b,r,c,col); if(f.length) m.push({r,c,flips:f}); } return m; }
-  function apply(b,m,col){ const nb=b.map(r=>r.slice()); nb[m.r][m.c]=col; m.flips.forEach(([r,c])=>{ nb[r][c]=col; }); return nb; }
-  function evalB(b){ let s=0; for(let r=0;r<8;r++) for(let c=0;c<8;c++){ if(b[r][c]==='W') s+=WEIGHTS[r][c]; else if(b[r][c]==='B') s-=WEIGHTS[r][c]; } return s; }
-  function minimax(b,d,a,be,max){ const col=max?'W':'B'; const ms=moves(b,col); if(d===0||!ms.length) return evalB(b); if(max){ let best=-Infinity; for(const m of ms){ const nb=apply(b,m,col); best=Math.max(best,minimax(nb,d-1,a,be,false)); a=Math.max(a,best); if(be<=a) break; } return best; } else { let best=Infinity; for(const m of ms){ const nb=apply(b,m,col); best=Math.min(best,minimax(nb,d-1,a,be,true)); be=Math.min(be,best); if(be<=a) break; } return best; } }
-  function ai(){ const ms=moves(board,'W'); if(!ms.length){ check(); return; } let bv=-Infinity,bm=null; for(const m of ms){ const nb=apply(board,m,'W'); const v=minimax(nb,3,-Infinity,Infinity,false); if(v>bv){ bv=v; bm=m; } } board=apply(board,bm,'W'); turn='B'; upd(); draw(); check(); }
-  function check(){ const bM=moves(board,'B'), wM=moves(board,'W'); if(!bM.length&&!wM.length){ over=true; let bc=0,wc=0; for(let r=0;r<8;r++) for(let c=0;c<8;c++){ if(board[r][c]==='B') bc++; if(board[r][c]==='W') wc++; } const st=document.getElementById('rv-status'); if(st) st.textContent= bc>wc?'You win!':wc>bc?'AI wins!':'Draw!'; return; } if(turn==='B'&&!bM.length) turn='W'; if(turn==='W'&&!wM.length) turn='B'; upd(); if(turn==='W'&&!over){ const th=document.getElementById('rv-think'); if(th) th.style.display='inline'; setTimeout(()=>{ ai(); const th2=document.getElementById('rv-think'); if(th2) th2.style.display='none'; },300); } }
-  function attach(){ const cv=document.getElementById('rv-canvas'); if(!cv||cv.dataset.bound) return; cv.dataset.bound='1'; cv.addEventListener('click',(e)=>{ if(over||turn!=='B') return; const rect=cv.getBoundingClientRect(); const sx=cv.width/rect.width, sy=cv.height/rect.height; const x=(e.clientX-rect.left)*sx, y=(e.clientY-rect.top)*sy; const c=Math.floor(x/CELL), r=Math.floor(y/CELL); if(r<0||r>=8||c<0||c>=8) return; const f=flips(board,r,c,'B'); if(!f.length) return; board=apply(board,{r,c,flips:f},'B'); turn='W'; upd(); draw(); check(); }); }
-  function upd(){ let bc=0,wc=0; for(let r=0;r<8;r++) for(let c=0;c<8;c++){ if(board[r][c]==='B') bc++; if(board[r][c]==='W') wc++; } const sb=document.getElementById('rv-sb'); if(sb) sb.textContent=bc; const sw=document.getElementById('rv-sw'); if(sw) sw.textContent=wc; const st=document.getElementById('rv-status'); if(st&&!over) st.textContent= turn==='B'?'Your turn (Black ●)':'AI turn (White ○)'; const dot=document.getElementById('rv-dot'); if(dot) dot.className='dot'+(turn==='W'?' ai':''); }
-  function draw(){ const cv=document.getElementById('rv-canvas'); if(!cv) return; const ctx=cv.getContext('2d'); const S=SIZE*CELL; ctx.fillStyle='#0a5c2e'; ctx.fillRect(0,0,cv.width,cv.height); ctx.strokeStyle='#083d1f'; for(let i=0;i<=8;i++){ ctx.beginPath(); ctx.moveTo(i*CELL,0); ctx.lineTo(i*CELL,S); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0,i*CELL); ctx.lineTo(S,i*CELL); ctx.stroke(); } const valid=!over&&turn==='B'?moves(board,'B'):[]; for(let r=0;r<8;r++) for(let c=0;c<8;c++){ const p=board[r][c]; if(p){ ctx.beginPath(); ctx.arc(c*CELL+CELL/2,r*CELL+CELL/2,CELL/2-4,0,Math.PI*2); ctx.fillStyle=p==='B'?'#111':'#eee'; ctx.fill(); } else if(valid.some(m=>m.r===r&&m.c===c)){ ctx.beginPath(); ctx.arc(c*CELL+CELL/2,r*CELL+CELL/2,4,0,Math.PI*2); ctx.fillStyle='rgba(0,212,255,.5)'; ctx.fill(); } } }
-})();
-
-// === TETRIS FIXED ===
-(function(){
-const COLS=10,ROWS=20,BS=24; const SHAPES={I:{color:'#00d4ff',rot:[[[0,1],[1,1],[2,1],[3,1]],[[1,0],[1,1],[1,2],[1,3]]]},O:{color:'#ffc857',rot:[[[0,0],[0,1],[1,0],[1,1]]]},T:{color:'#aa66ff',rot:[[[0,1],[1,0],[1,1],[1,2]],[[0,1],[1,1],[1,2],[2,1]],[[1,0],[1,1],[1,2],[2,1]],[[0,1],[1,0],[1,1],[2,1]]]},S:{color:'#00ff88',rot:[[[0,1],[0,2],[1,0],[1,1]],[[0,1],[1,1],[1,2],[2,2]]]},Z:{color:'#ff3366',rot:[[[0,0],[0,1],[1,1],[1,2]],[[0,2],[1,1],[1,2],[2,1]]]},J:{color:'#4488ff',rot:[[[0,0],[1,0],[1,1],[1,2]],[[0,1],[0,2],[1,1],[2,1]],[[1,0],[1,1],[1,2],[2,2]],[[0,1],[1,1],[2,0],[2,1]]]},L:{color:'#ff8800',rot:[[[0,2],[1,0],[1,1],[1,2]],[[0,1],[1,1],[2,1],[2,2]],[[1,0],[1,1],[1,2],[2,0]],[[0,0],[0,1],[1,1],[2,1]]]}};
-let b,piece,pos,rot,bag,next,hold,holdUsed,score,lines,level,loop,over,paused;
-function newBag(){ const k=Object.keys(SHAPES); for(let i=k.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [k[i],k[j]]=[k[j],k[i]]; } return k; }
-window.tetInit=function(){ b=Array.from({length:ROWS},()=>Array(COLS).fill(null)); bag=newBag(); next=bag.pop(); hold=null; holdUsed=false; score=0; lines=0; level=1; over=false; paused=false; upd(); spawn(); draw(); drawNext(); drawHold(); clearInterval(loop); loop=setInterval(grav, 500); };
-window.tetStart=function(){ paused=false; clearInterval(loop); loop=setInterval(grav, Math.max(120,600-level*50)); };
-function spawn(){ if(bag.length===0) bag=newBag(); piece=next; next=bag.pop(); rot=0; pos={r:0,c:3}; holdUsed=false; if(coll(piece,rot,pos)){ over=true; clearInterval(loop); } drawNext(); }
-function cells(p,r,ps){ return SHAPES[p].rot[r%SHAPES[p].rot.length].map(([rr,cc])=>({r:rr+ps.r,c:cc+ps.c})); }
-function coll(p,r,ps){ return cells(p,r,ps).some(({r,c})=> c<0||c>=COLS||r>=ROWS||(r>=0&&b[r][c])); }
-window.tetMove=function(d){ if(paused||over) return; const np={...pos,c:pos.c+d}; if(!coll(piece,rot,np)){ pos=np; draw(); } };
-window.tetRotate=function(){ if(paused||over) return; const nr=(rot+1)%4; if(!coll(piece,nr,pos)){ rot=nr; draw(); } else if(!coll(piece,nr,{...pos,c:pos.c-1})){ rot=nr; pos.c-=1; draw(); } else if(!coll(piece,nr,{...pos,c:pos.c+1})){ rot=nr; pos.c+=1; draw(); } };
-window.tetDrop=function(){ if(paused||over) return; grav(); };
-window.tetHardDrop=function(){ if(paused||over) return; while(!coll(piece,rot,{...pos,r:pos.r+1})) pos.r++; lock(); };
-window.tetDoHold=function(){ if(paused||over||holdUsed) return; holdUsed=true; if(hold===null){ hold=piece; spawn(); } else { const tmp=hold; hold=piece; piece=tmp; rot=0; pos={r:0,c:3}; } drawHold(); draw(); };
-function grav(){ if(paused||over) return; const np={...pos,r:pos.r+1}; if(!coll(piece,rot,np)){ pos=np; draw(); } else lock(); }
-function lock(){ cells(piece,rot,pos).forEach(({r,c})=>{ if(r>=0) b[r][c]=SHAPES[piece].color; }); clearL(); spawn(); draw(); }
-function clearL(){ let cl=0; for(let r=ROWS-1;r>=0;r--){ if(b[r].every(x=>x)){ b.splice(r,1); b.unshift(Array(COLS).fill(null)); cl++; r++; } } if(cl>0){ const pts=[0,100,300,500,800][cl]*level; score+=pts; lines+=cl; level=1+Math.floor(lines/10); clearInterval(loop); loop=setInterval(grav, Math.max(120,600-level*50)); upd(); } }
-function upd(){ const s=document.getElementById('tet-score'); if(s) s.textContent=score; const l=document.getElementById('tet-lines'); if(l) l.textContent=lines; const lv=document.getElementById('tet-level'); if(lv) lv.textContent=level; }
-document.addEventListener('keydown',(e)=>{ const v=document.getElementById('tet-view'); if(!v||v.style.display==='none') return; if(e.key==='ArrowLeft') window.tetMove(-1); else if(e.key==='ArrowRight') window.tetMove(1); else if(e.key==='ArrowDown') window.tetDrop(); else if(e.key==='ArrowUp') window.tetRotate(); else if(e.key===' ') window.tetHardDrop(); else if(e.key==='c'||e.key==='C') window.tetDoHold(); });
-function draw(){ const cv=document.getElementById('tet-canvas'); if(!cv) return; const ctx=cv.getContext('2d'); ctx.fillStyle='#050912'; ctx.fillRect(0,0,cv.width,cv.height); for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++) if(b[r][c]){ ctx.fillStyle=b[r][c]; ctx.fillRect(c*BS+1,r*BS+1,BS-2,BS-2); } if(piece){ const cs=cells(piece,rot,pos); ctx.fillStyle=SHAPES[piece].color; cs.forEach(({r,c})=>{ if(r>=0) ctx.fillRect(c*BS+1,r*BS+1,BS-2,BS-2); }); } }
-function mini(id,p){ const cv=document.getElementById(id); if(!cv) return; const ctx=cv.getContext('2d'); ctx.fillStyle='#050912'; ctx.fillRect(0,0,cv.width,cv.height); if(!p) return; const cs=SHAPES[p].rot[0]; const s=16; cs.forEach(([r,c])=>{ ctx.fillStyle=SHAPES[p].color; ctx.fillRect(c*s+8,r*s+8,s-2,s-2); }); }
-function drawNext(){ mini('tet-next',next); } function drawHold(){ mini('tet-hold',hold); }
-})();
-</script><script>
-(function(){
-let boardEl, promoModal, promoPiecesEl, aiDot, thinkingEl;
-let board = [];
-let selected = null;
-let legalMoves = [];
-let turn = "white";
-let promoting = null;
-const PIECES = {"P":"♙","R":"♖","N":"♘","B":"♗","Q":"♕","K":"♔","p":"♟","r":"♜","n":"♞","b":"♝","q":"♛","k":"♚"};
-function ensureDom(){ boardEl=document.getElementById("chess-board"); promoModal=document.querySelector(".promo-modal"); promoPiecesEl=document.querySelector(".promo-pieces"); aiDot=document.querySelector(".dot.ai"); thinkingEl=document.querySelector(".thinking"); }
-function isWhite(p){return p&&p===p.toUpperCase();}
-function cloneBoard(b){return b.map(r=>r.slice());}
-function getSquare(r,c){if(!boardEl)return null; return boardEl.querySelector(`.square[data-r="${r}"][data-c="${c}"]`);}
-function renderBoard(){if(!boardEl)ensureDom(); if(!boardEl)return; boardEl.innerHTML=""; for(let r=0;r<8;r++){for(let c=0;c<8;c++){const sq=document.createElement("div"); sq.classList.add("square",(r+c)%2===0?"light":"dark"); sq.dataset.r=r; sq.dataset.c=c; const piece=board[r][c]; if(piece){const span=document.createElement("span"); span.className="piece"; span.textContent=PIECES[piece]; sq.appendChild(span);} sq.addEventListener("click",()=>onSquareClick(r,c)); boardEl.appendChild(sq);}}}
-function getPseudoMoves(b,r,c){const piece=b[r][c]; if(!piece)return []; const isW=isWhite(piece); const type=piece.toUpperCase(); const moves=[]; const inBoard=(nr,nc)=>nr>=0&&nr<8&&nc>=0&&nc<8; if(type==="P"){const fwd=isW?-1:1; const start=isW?6:1; if(inBoard(r+fwd,c)&&b[r+fwd][c]===""){moves.push({r:r+fwd,c,capture:false}); if(r===start&&b[r+fwd*2][c]==="")moves.push({r:r+fwd*2,c,capture:false});} [-1,1].forEach(dc=>{const nr=r+fwd,nc=c+dc; if(inBoard(nr,nc)&&b[nr][nc]&&isWhite(b[nr][nc])!==isW){moves.push({r:nr,c:nc,capture:true});}});}else{const dirs={N:[[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]],B:[[-1,-1],[-1,1],[1,-1],[1,1]],R:[[-1,0],[1,0],[0,-1],[0,1]],Q:[[-1,-1],[-1,1],[1,-1],[1,1],[-1,0],[1,0],[0,-1],[0,1]],K:[[-1,-1],[-1,1],[1,-1],[1,1],[-1,0],[1,0],[0,-1],[0,1]]}; const ds=type==="N"?dirs.N:type==="B"?dirs.B:type==="R"?dirs.R:dirs[type]; if(type==="N"||type==="K"){ds.forEach(([dr,dc])=>{const nr=r+dr,nc=c+dc; if(!inBoard(nr,nc))return; const t=b[nr][nc]; if(t===""||isWhite(t)!==isW)moves.push({r:nr,c:nc,capture:t!==""});});}else{ds.forEach(([dr,dc])=>{let nr=r+dr,nc=c+dc; while(inBoard(nr,nc)){const t=b[nr][nc]; if(t==="")moves.push({r:nr,c:nc,capture:false}); else{if(isWhite(t)!==isW)moves.push({r:nr,c:nc,capture:true}); break;} nr+=dr; nc+=dc;}});}} return moves;}
-function isCheck(b,color){const king=color==="white"?"K":"k"; let kr=-1,kc=-1; for(let r=0;r<8;r++)for(let c=0;c<8;c++)if(b[r][c]===king){kr=r;kc=c;} if(kr===-1)return false; const enemyIsWhite=color!=="white"; for(let r=0;r<8;r++)for(let c=0;c<8;c++){const p=b[r][c]; if(!p)continue; if(isWhite(p)!==enemyIsWhite)continue; const ms=getPseudoMoves(b,r,c); if(ms.some(m=>m.r===kr&&m.c===kc))return true;} return false;}
-function moveLeavesKingInCheck(r1,c1,r2,c2){const piece=board; const target=board; board=piece; board=""; const color=isWhite(piece)?"white":"black"; const check=isCheck(board,color); board=piece; board=target; return check;}
-function getLegalMoves(r,c){const pseudo=getPseudoMoves(board,r,c); return pseudo.filter(m=>!moveLeavesKingInCheck(r,c,m.r,m.c));}
-function onSquareClick(r,c){if(promoting)return; const piece=board[r][c]; if(!selected){if(!piece)return; if(isWhite(piece)!==(turn==="white"))return; selected={r,c}; legalMoves=getLegalMoves(r,c); highlightSelection(); return;} const move=legalMoves.find(m=>m.r===r&&m.c===c); if(move)makeMove(selected.r,selected.c,r,c,move); clearHighlights(); selected=null; legalMoves=[];}
-function highlightSelection(){clearHighlights(); getSquare(selected.r,selected.c)?.classList.add("selected"); legalMoves.forEach(m=>{getSquare(m.r,m.c)?.classList.add(m.capture?"capture":"move");});}
-function clearHighlights(){document.querySelectorAll(".square").forEach(sq=>sq.classList.remove("selected","move","capture"));}
-function makeMove(r1,c1,r2,c2,move){const piece=board; const target=board; if(target)addCapture(target); if((piece==="P"&&r2===0)||(piece==="p"&&r2===7)){promoting={r1,c1,r2,c2,piece}; showPromotion(piece); return;} board=piece; board=""; turn=turn==="white"?"black":"white"; const st=document.getElementById("chess-status"); if(st)st.textContent=(turn==="white"?"White":"Black")+" to move"+(isCheck(board,turn)?" - CHECK!":""); renderBoard(); if(turn==="black")setTimeout(aiMove,300);}
-function showPromotion(piece){if(!promoModal||!promoPiecesEl)return; promoModal.classList.add("show"); promoPiecesEl.innerHTML=""; const opts=isWhite(piece)?["Q","R","B","N"]:["q","r","b","n"]; opts.forEach(p=>{const el=document.createElement("div"); el.className="promo-piece"; el.textContent=PIECES[p]; el.addEventListener("click",()=>promote(p)); promoPiecesEl.appendChild(el);});}
-function promote(newPiece){const{r1,c1,r2,c2}=promoting; board=newPiece; board=""; promoting=null; promoModal?.classList.remove("show"); turn=turn==="white"?"black":"white"; renderBoard(); if(turn==="black")setTimeout(aiMove,300);}
-function addCapture(piece){const row=document.querySelector(".cap-row"); if(!row)return; const span=document.createElement("span"); span.textContent=PIECES[piece]; row.appendChild(span);}
-let AI_DEPTH=2;
-function evaluateBoard(b){const values={"P":100,"N":320,"B":330,"R":500,"Q":900,"K":20000,"p":-100,"n":-320,"b":-330,"r":-500,"q":-900,"k":-20000}; let score=0; for(let r=0;r<8;r++)for(let c=0;c<8;c++){const p=b[r][c]; if(!p)continue; score+=values[p]||0;} return score;}
-function getAllMoves(b,color){const moves=[]; const isW=color==="white"; for(let r=0;r<8;r++)for(let c=0;c<8;c++){const p=b[r][c]; if(!p)continue; if(isWhite(p)!==isW)continue; getPseudoMoves(b,r,c).forEach(m=>moves.push({r1:r,c1:c,r2:m.r,c2:m.c}));} return moves;}
-function simulateMove(b,mv){const nb=cloneBoard(b); nb[mv.r2][mv.c2]=nb[mv.r1][mv.c1]; nb[mv.r1][mv.c1]=""; return nb;}
-function minimax(b,depth,alpha,beta,maximizing){if(depth===0)return evaluateBoard(b); const moves=getAllMoves(b,maximizing?"black":"white"); if(moves.length===0)return evaluateBoard(b); if(maximizing){let maxEval=-Infinity; for(const mv of moves){const ev=minimax(simulateMove(b,mv),depth-1,alpha,beta,false); maxEval=Math.max(maxEval,ev); alpha=Math.max(alpha,ev); if(beta<=alpha)break;} return maxEval;}else{let minEval=Infinity; for(const mv of moves){const ev=minimax(simulateMove(b,mv),depth-1,alpha,beta,true); minEval=Math.min(minEval,ev); beta=Math.min(beta,ev); if(beta<=alpha)break;} return minEval;}}
-function aiMove(){if(aiDot)aiDot.style.background="var(--red)"; if(thinkingEl)thinkingEl.style.display="inline"; setTimeout(()=>{const moves=getAllMoves(board,"black"); let best=null,bestScore=Infinity; for(const mv of moves){const nb=simulateMove(board,mv); if(isCheck(nb,"black"))continue; const score=minimax(nb,AI_DEPTH,-Infinity,Infinity,false); if(score<bestScore){bestScore=score; best=mv;}} if(best)makeMove(best.r1,best.c1,best.r2,best.c2,{capture:board[best.r2][best.c2]!==""}); if(aiDot)aiDot.style.background="var(--cyan)"; if(thinkingEl)thinkingEl.style.display="none";},200);}
-function initChess(){ensureDom(); board=[["r","n","b","q","k","b","n","r"],["p","p","p","p","p","p","p","p"],["","","","","","","",""],["","","","","","","",""],["","","","","","","",""],["","","","","","","",""],["P","P","P","P","P","P","P","P"],["R","N","B","Q","K","B","N","R"]]; selected=null; legalMoves=[]; turn="white"; promoting=null; const capRow=document.querySelector(".cap-row"); if(capRow)capRow.innerHTML=""; const st=document.getElementById("chess-status"); if(st)st.textContent="White to move"; renderBoard();}
-window.initChess=initChess; window.chessNew=initChess;
-})();
-</script><footer style="text-align:center; padding:25px; font-size:13px; background:#0a0a0a; color:#888;">
-  <a href="/privacy-policy.html" style="color:#5af;">Privacy Policy</a> |
-  <a href="/terms.html" style="color:#5af;">Terms</a> |
-  <a href="mailto:maxbarbetta100@gmail.com" style="color:#5af;">Contact</a>
-</footer></body></html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Strategy Core: 7 Classic Games</title>
+    <script type="module" crossorigin src="/assets/index-BAoyeUmH.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-DBv6Qer6.css">
+  </head>
+  <body>
+    <header class="header">
+      <div class="logo">Strategy Core</div>
+      <nav>
+        <a href="#features">Características</a>
+        <a href="#download">Descargar</a>
+      </nav>
+    </header>
+    <section class="hero">
+      <div class="hero-content">
+        <h1>7 Juegos Clásicos en una sola App</h1>
+        <p>Revive la estrategia clásica con una colección única optimizada para móviles.</p>
+        <a class="cta-button" id="download" href="https://play.google.com/store/apps/details?id=com.strategycore.app" target="_blank">
+          Descargar en Google Play
+        </a>
+      </div>
+      <img src="/assets/hero.png" alt="Strategy Core Hero" class="hero-img" />
+    </section>
+    <section id="features" class="features">
+      <h2>Características</h2>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <h3>🎮 7 Juegos Clásicos</h3>
+          <p>Una colección cuidadosamente seleccionada para los amantes de la estrategia.</p>
+        </div>
+        <div class="feature-card">
+          <h3>⚡ Rendimiento Optimizado</h3>
+          <p>Experiencia fluida incluso en dispositivos de gama media.</p>
+        </div>
+        <div class="feature-card">
+          <h3>🌙 Modo Oscuro</h3>
+          <p>Diseño moderno y agradable para sesiones largas.</p>
+        </div>
+        <div class="feature-card">
+          <h3>🔗 Deep Links</h3>
+          <p>Integración completa con App Links para abrir contenido directamente.</p>
+        </div>
+      </div>
+    </section>
+    <footer class="footer">
+      <p>© 2026 Strategy Core</p>
+    </footer>
+  </body>
+</html>
